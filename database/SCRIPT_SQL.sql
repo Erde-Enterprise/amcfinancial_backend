@@ -5,7 +5,7 @@ CREATE TABLE User_Root (
     password VARCHAR(255)
 );
 
-CREATE TABLE  Costumer (
+CREATE TABLE  Customer (
     id INT PRIMARY KEY,
     email VARCHAR(255),
     password VARCHAR(255),

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'app'
 ]
 
 MIDDLEWARE = [
@@ -77,7 +78,7 @@ WSGI_APPLICATION = 'amcfinancial.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME':  'amcfinancial',
+        'NAME':  'amcFinancial',
         'USER': 'sa',
         'PASSWORD': 'root1234',
         'HOST': 'DESKTOP-9T6N9BP',

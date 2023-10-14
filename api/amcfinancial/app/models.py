@@ -11,7 +11,7 @@ class Customer(models.Model):
     email = models.EmailField(max_length=255)
     password = models.CharField(max_length=255)
     type = models.IntegerField()
-    root_Id = models.ForeignKey(User_Root, on_delete=models.SET_NULL)
+    root_Id = models.ForeignKey(User_Root, on_delete=models.DO_NOTHING)
 
 class Medical_Clinic(models.Model):
     id = models.AutoField(primary_key=True)
@@ -30,11 +30,11 @@ class Invoice(models.Model):
     reminder = models.IntegerField()
     status = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
-    clinic_Id = models.ForeignKey(Medical_Clinic, on_delete=models.SET_NULL)
-    user_Id = models.ForeignKey(Customer, on_delete=models.SET_NULL)
+    clinic_Id = models.ForeignKey(Medical_Clinic, on_delete=models.DO_NOTHING)
+    user_Id = models.ForeignKey(Customer, on_delete=models.DO_NOTHING)
 
 class Access_History(models.Model):
     id = models.AutoField(primary_key=True)
-    user_Id = models.ForeignKey(User_Root, on_delete=models.SET_NULL)
+    user_Id = models.ForeignKey(User_Root, on_delete=models.DO_NOTHING)
     login_date = models.DateTimeField()
     location = models.CharField(max_length=255)

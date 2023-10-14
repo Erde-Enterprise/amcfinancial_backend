@@ -5,7 +5,7 @@ INSERT INTO User_Root (id, email_Root, password)
 VALUES (1, 'user_root@example.com', 'password123');
 
 -- Inserindo dados na tabela Costumer (clientes)
-INSERT INTO Costumer (id, email, password, type, root_Id)
+INSERT INTO Customer (id, email, password, type, root_Id)
 VALUES (1, 'customer1@example.com', 'password123', 1, 1),
        (2, 'customer2@example.com', 'password456', 2, 1);
 
