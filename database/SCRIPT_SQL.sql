@@ -1,10 +1,11 @@
+
 CREATE TABLE User_Root (
     id INT PRIMARY KEY,
     email_Root VARCHAR(255),
     password VARCHAR(255)
 );
 
-CREATE TABLE User (
+CREATE TABLE  Costumer (
     id INT PRIMARY KEY,
     email VARCHAR(255),
     password VARCHAR(255),
@@ -32,7 +33,9 @@ CREATE TABLE Invoice (
     status VARCHAR(255),
     type VARCHAR(255),
     clinic_Id INT,
-    FOREIGN KEY (clinic_Id) REFERENCES Medical_Clinic(id)
+    user_Id INT,
+    FOREIGN KEY (clinic_Id) REFERENCES Medical_Clinic(id),
+    FOREIGN KEY (user_Id) REFERENCES Costumer(id),
 );
 
 CREATE TABLE Access_History (
@@ -40,5 +43,5 @@ CREATE TABLE Access_History (
     user_Id INT,
     login_date DATETIME,
     location VARCHAR(255),
-    FOREIGN KEY (user_Id) REFERENCES User_Root(id)
+    FOREIGN KEY (user_Id) REFERENCES Costumer(id)
 );
