@@ -11,3 +11,6 @@ class UserRootSerializer(serializers.ModelSerializer):
     class Meta:
         model = User_Root
         fields = '__all__'
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()

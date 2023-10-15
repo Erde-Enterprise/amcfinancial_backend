@@ -3,15 +3,15 @@ from django.db import models
 
 class User_Root(models.Model):
     id = models.AutoField(primary_key=True)
-    email_Root = models.EmailField(max_length=255)
+    email_Root = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
 
 class Customer(models.Model):
     id = models.AutoField(primary_key=True)
-    email = models.EmailField(max_length=255)
+    email = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     type = models.IntegerField()
-    root_Id = models.ForeignKey(User_Root, on_delete=models.DO_NOTHING)
+    root = models.ForeignKey(User_Root, on_delete=models.DO_NOTHING)
 
 class Medical_Clinic(models.Model):
     id = models.AutoField(primary_key=True)
@@ -20,7 +20,7 @@ class Medical_Clinic(models.Model):
 
 class Invoice(models.Model):
     id = models.AutoField(primary_key=True)
-    invoice_number = models.CharField(max_length=255)
+    invoice_number = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     amount = models.IntegerField()
     title = models.CharField(max_length=255)
@@ -30,11 +30,11 @@ class Invoice(models.Model):
     reminder = models.IntegerField()
     status = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
-    clinic_Id = models.ForeignKey(Medical_Clinic, on_delete=models.DO_NOTHING)
-    user_Id = models.ForeignKey(Customer, on_delete=models.DO_NOTHING)
+    clinic = models.ForeignKey(Medical_Clinic, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(Customer, on_delete=models.DO_NOTHING)
 
 class Access_History(models.Model):
     id = models.AutoField(primary_key=True)
-    user_Id = models.ForeignKey(User_Root, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User_Root, on_delete=models.DO_NOTHING)
     login_date = models.DateTimeField()
     location = models.CharField(max_length=255)
