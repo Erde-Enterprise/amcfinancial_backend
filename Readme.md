@@ -40,6 +40,22 @@ Instalar Dependências
 ```bash
 pip install -r requirements.txt
 ```
+
+### 4. Configurando Banco de dados
+Para isso, crie um documento na raiz do projeto "api" igual ao **databaseconf_example.py** mas deixe com o nome de **databaseconf.py**, copie os dados no example e substitua pelas suas configurações do banco de dados do seu SQL Server.
+
 ### 4. Executando o Projeto
 
-Agora você pode executar o projeto e começar a trabalhar nele! Lembre-se de ativar sua máquina virtual sempre que estiver trabalhando neste projeto para garantir que as dependências corretas estejam sendo usadas.
+Prepare as migrações
+```bash
+python manage.py makemigrations 
+```
+
+Efetue as migrações
+```bash
+python manage.py migrate 
+```
+Rode o programa
+```bash
+python manage.py runserver
+```
