@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import sys
+sys.path.append('..')
+from databaseconf import NAME, USER, PASSWORD, HOST
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -78,10 +81,10 @@ WSGI_APPLICATION = 'amcfinancial.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME':  'amcFinancial',
-        'USER': 'sa',
-        'PASSWORD': 'root1234',
-        'HOST': 'DESKTOP-9T6N9BP',
+        'NAME':  NAME,
+        'USER': USER,
+        'PASSWORD': PASSWORD,
+        'HOST': HOST,
         'PORT': '',
     }
 }
