@@ -12,5 +12,5 @@ class UserRootSerializer(serializers.ModelSerializer):
         model = User_Root
         fields = '__all__'
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email_or_nickname = serializers.CharField()
     password = serializers.CharField()

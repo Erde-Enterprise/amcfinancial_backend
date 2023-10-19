@@ -8,4 +8,7 @@ def create_user_root(sender, **kwargs):
         User_Root.objects.create(
             email_Root='root@gmail.com',
             password='root12345',
+            nickname='root',
+            name='Admin',
+            photo=None
         )
