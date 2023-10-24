@@ -1,9 +1,14 @@
 from django.urls import path
 
-from .views import get_root, login_view, teste_token
+from .views import login_view, validate_token
+
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
-    path('', get_root),
-    path('login',login_view ),
-    path('teste_token', teste_token ),
+    path('login/',login_view ),
+    path('validate-token/', validate_token),
+    # SWAGGER
+    path('schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
