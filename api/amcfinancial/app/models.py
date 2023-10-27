@@ -5,7 +5,7 @@ class User_Root(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     nickname = models.CharField(max_length=255, unique=True)
-    email_Root = models.EmailField(max_length=255, unique=True)
+    email_root = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     photo = models.BinaryField(null=True, blank=True)
 class Customer(models.Model):

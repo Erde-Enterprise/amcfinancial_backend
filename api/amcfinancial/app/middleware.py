@@ -7,11 +7,8 @@ import sys
 sys.path.append('..')
 from amcfinancial.settings import SECRET_KEY
 
-def teste_token(request):
+def teste_token(token):
     try:
-        serialize = AccessSerializer(data=request)
-        serialize.is_valid(raise_exception=True)
-        token = serialize.validated_data['access_token']
         payload = jwt.decode(token,SECRET_KEY, algorithms=['HS256'])
         user = User_Root.objects.get(id=payload['user_id'])
         if user:
