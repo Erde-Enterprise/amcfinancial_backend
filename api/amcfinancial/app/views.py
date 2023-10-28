@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.db import IntegrityError
 import base64
 import os
 from rest_framework import status
@@ -122,7 +123,7 @@ def register_costumer(request):
     if validation['validity']:
       if validation['type'] == 0:
         userRoot = User_Root.objects.get(id=validation['id'])
-        if request.FILES['photo']:
+        if 'photo' in request.FILES and request.FILES['photo']:
           photo_bytes = request.FILES['photo'].read()
         else:
           current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -145,5 +146,7 @@ def register_costumer(request):
          return Response({'error': 'Unauthorized User'}, status= status.HTTP_401_UNAUTHORIZED)
     else:
       return Response({'error': 'Invalid token or Activation Expired'}, status= status.HTTP_400_BAD_REQUEST)
+  except IntegrityError:
+    return Response({'error': 'User already exists'}, status= status.HTTP_400_BAD_REQUEST)
   except:
     return Response({'error': 'Internal Server Error'}, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
