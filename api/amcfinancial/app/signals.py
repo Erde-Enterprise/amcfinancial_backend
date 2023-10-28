@@ -1,5 +1,6 @@
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
+from django.contrib.auth.hashers import make_password
 from .models import User_Root
 import os
 
@@ -12,7 +13,7 @@ def create_user_root(sender, **kwargs):
             imagem_bytes = f.read()
         User_Root.objects.create(
             email_root='root@gmail.com',
-            password='root12345',
+            password= make_password('root12345'),
             nickname='root',
             name='Admin',
             photo=imagem_bytes

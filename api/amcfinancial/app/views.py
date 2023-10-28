@@ -1,11 +1,12 @@
 from django.db.models import Q
 from django.db import IntegrityError
-import base64
-import os
+from django.contrib.auth.hashers import make_password, check_password
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+import base64
+import os
 
 from .models import User_Root, Customer
 from .serializers import LoginSerializer, RegisterCostumerSerializer, AccessSerializer
@@ -87,9 +88,8 @@ def login_view(request):
       email_or_nickname = serializer.validated_data['email_or_nickname']
       password = serializer.validated_data['password']
 
-      user_root = User_Root.objects.filter(Q(email_root=email_or_nickname)|Q(nickname=email_or_nickname), password=password).first()
-
-      if user_root:
+      user_root = User_Root.objects.filter(Q(email_root=email_or_nickname)|Q(nickname=email_or_nickname)).first()
+      if user_root and check_password(password, user_root.password):
           image_binary_data = user_root.photo
           image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
           refresh = RefreshToken.for_user(user_root)
@@ -100,8 +100,8 @@ def login_view(request):
                             'photo': image_base64,
                             'user_type': 0}, status=status.HTTP_200_OK)
       
-      customer = Customer.objects.filter(Q(email=email_or_nickname)|Q(nickname=email_or_nickname), password=password).first() 
-      if customer:
+      customer = Customer.objects.filter(Q(email=email_or_nickname)|Q(nickname=email_or_nickname)).first() 
+      if customer and check_password(password, customer.password):
           image_binary_data = customer.photo
           image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
           refresh = RefreshToken.for_user(customer)
@@ -130,12 +130,12 @@ def register_costumer(request):
           avatar_path = os.path.join(current_directory, 'static/images/avatar.png')
           with open(avatar_path, 'rb') as f:
             photo_bytes = f.read()
-
+        password_crypt = make_password(serializer.validated_data['password'])
         customer = Customer.objects.create(
         name = serializer.validated_data['name'],
         nickname = serializer.validated_data['nickname'],
         email = serializer.validated_data['email'],
-        password = serializer.validated_data['password'],
+        password = password_crypt,
         photo = photo_bytes,
         type = serializer.validated_data['type'],
         root = userRoot
