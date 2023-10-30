@@ -11,7 +11,7 @@ import os
 from .models import User_Root, Customer
 from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer
 from .middleware import teste_token
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 class ValidateTokenView(APIView):
   @extend_schema(
     summary="Validates User Token API",
@@ -19,28 +19,30 @@ class ValidateTokenView(APIView):
     parameters=[OpenApiParameter(
       name="access_token", 
       description="User access token to be validated", 
-      required=True, type=str,
-      location="query")],
+      required=True,
+      type=str,
+      location=OpenApiParameter.QUERY)],
     request=AccessSerializer,
     responses={
       200: {
         "description": "Successful token validation.", 
-        "content": {
-            "application/json": {
-              "example": {
-                "response": "Valid token"}}}},
+        "example": {
+          "response": "Valid token"
+        }
+      },
       400: {
         "description": "Invalid token or Activation Expired.", 
-        "content": {
-            "application/json": {
-                "example": {
-                    "error": "Invalid token or Activation Expired"}}}},
+        "example": {
+            "error": "Invalid token or Activation Expired"
+        }
+      },
+
       500: {
         "description": "Internal Server Error.", 
-        "content": {
-            "application/json": {
-                "example": {
-                    "error": "Internal Server Error"}}}}
+        "example": {
+            "error": "Internal Server Error"
+        }
+      }
     }
   )
   
@@ -58,39 +60,47 @@ class ValidateTokenView(APIView):
         return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
+    @extend_schema(
+      summary="User Login API",
+      description="Authenticates users based on provided email/nickname and password.",
+        parameters=[
+            OpenApiParameter(
+                name="email_or_nickname",
+                description="Email address or nickname of the user.",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="password",
+                description="User password.",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+      request=LoginSerializer,
+      responses={
+            200: {
+                "description": "Successful login - Returns user information and access token.",
+                "example": {
+                    "token": "access_token_string",
+                    "email": "user@example.com",
+                    "nickname": "user123",
+                    "name": "John Doe",
+                    "photo": "http://example.com/user.jpg",
+                    "user_type": 1,
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid credentials.",
+                "example": {
+                    "error": 'Unauthorized User'
+                  }
+            }
+        },
+    )
     def post(self, request):
-        """
-        User Login API.
-
-        Authenticates users based on provided email/nickname and password.
-        
-        ---
-        parameters:
-          - email_or_nickname: Email address or nickname of the user.
-            - required: true
-            - type: string 
-          - password: User password.
-            - required: true
-            - type: string
-            \n
-        responses:
-          - 200: Successful login - Returns user information and access token.
-            - token: Access token for authenticated user.
-              - type: string
-            - email: User's email address.
-              - type: string
-            - nickname: User's nickname.
-              - type: string
-            - name: User's name.
-              - type: string
-            - photo: URL of user's profile photo.
-              - type: string
-            - user_type: Type of user (0 for User_Root, 1 for Customer type 1 and 2 for Customer type 2).
-              - type: integer
-          - 401: Unauthorized. Invalid credentials.
-            - is_valid: Indicates if the login attempt is valid.
-              - type: boolean
-        """
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email_or_nickname = serializer.validated_data['email_or_nickname']
@@ -122,7 +132,7 @@ class LoginView(APIView):
                             'photo': image_base64,
                             'user_type': customer.type}, status=status.HTTP_200_OK)
         
-        return Response({'is_valid': False,}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'is_valid': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class RegisterCustomerView(APIView):
     def post(self, request):
