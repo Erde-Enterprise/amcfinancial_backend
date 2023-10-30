@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
+from django.db import transaction
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -24,7 +25,7 @@ class ValidateTokenView(APIView):
           name="access_token", 
           description="User access token to be validated", 
           required=True,
-          type=str,
+          type=OpenApiTypes.STR,
           location="form"
         )
     ],
@@ -74,14 +75,14 @@ class LoginView(APIView):
                 name="email_or_nickname",
                 description="Email address or nickname of the user.",
                 required=True,
-                type=str,
+                type=OpenApiTypes.STR,
                 location="form",
             ),
             OpenApiParameter(
                 name="password",
                 description="User password.",
                 required=True,
-                type=str,
+                type=OpenApiTypes.STR,
                 location="form",
             ),
         ],
@@ -139,7 +140,7 @@ class LoginView(APIView):
                             'user_type': customer.type}, status=status.HTTP_200_OK)
         
         return Response({'is_valid': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
-
+    
 class RegisterCustomerView(APIView):
     @extend_schema(
         summary="Register Customer API",
@@ -234,33 +235,40 @@ class RegisterCustomerView(APIView):
             serializer = RegisterCostumerSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             validation = teste_token(serializer.validated_data['access_token'])
+            
             if validation['validity']:
                 if validation['type'] == 0:
+                    customer = Customer.objects.filter(Q(email=serializer.validated_data['email']) | Q(nickname=serializer.validated_data['nickname'])).first() 
                     userRoot = User_Root.objects.get(id=validation['id'])
-                    if 'photo' in request.FILES and request.FILES['photo']:
-                        photo_bytes = request.FILES['photo'].read()
+                    if not customer:
+                      if 'photo' in request.FILES and request.FILES['photo']:
+                          photo_bytes = request.FILES['photo'].read()
+                      else:
+                          current_directory = os.path.dirname(os.path.abspath(__file__))
+                          avatar_path = os.path.join(current_directory, 'static/images/avatar.png')
+                          with open(avatar_path, 'rb') as f:
+                              photo_bytes = f.read()
+                      password_crypt = make_password(serializer.validated_data['password'])
+                    
+                      customer = Customer.objects.create(
+                          name=serializer.validated_data['name'],
+                          nickname=serializer.validated_data['nickname'],
+                          email=serializer.validated_data['email'],
+                          password=password_crypt,
+                          photo=photo_bytes,
+                          type=serializer.validated_data['type'],
+                          root=userRoot
+                      ) 
+                      customer.save()
+                      return Response({'response': 'User created'}, status=status.HTTP_200_OK)
                     else:
-                        current_directory = os.path.dirname(os.path.abspath(__file__))
-                        avatar_path = os.path.join(current_directory, 'static/images/avatar.png')
-                        with open(avatar_path, 'rb') as f:
-                            photo_bytes = f.read()
-                    password_crypt = make_password(serializer.validated_data['password'])
-                    customer = Customer.objects.create(
-                        name=serializer.validated_data['name'],
-                        nickname=serializer.validated_data['nickname'],
-                        email=serializer.validated_data['email'],
-                        password=password_crypt,
-                        photo=photo_bytes,
-                        type=serializer.validated_data['type'],
-                        root=userRoot
-                    ) 
-                    customer.save()
-                    return Response({'response': 'User created'}, status=status.HTTP_200_OK)
+                        return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
                 else:
                     return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
-            return Response({'error': 'User already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Integrity Error'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
