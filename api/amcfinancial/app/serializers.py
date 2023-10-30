@@ -13,5 +13,5 @@ class RegisterCostumerSerializer(serializers.Serializer):
     nickname = serializers.CharField()
     email = serializers.EmailField()
     password = serializers.CharField()
-    photo = serializers.SerializerMethodField()
+    photo = serializers.ImageField()
     type = serializers.IntegerField() 

@@ -5,23 +5,29 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+
 import base64
 import os
 
 from .models import User_Root, Customer
 from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer
 from .middleware import teste_token
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+
+
 class ValidateTokenView(APIView):
   @extend_schema(
     summary="Validates User Token API",
     description="Validates the authenticity of a user token received in the request data.",
-    parameters=[OpenApiParameter(
-      name="access_token", 
-      description="User access token to be validated", 
-      required=True,
-      type=str,
-      location=OpenApiParameter.QUERY)],
+    parameters=[
+        OpenApiParameter(
+          name="access_token", 
+          description="User access token to be validated", 
+          required=True,
+          type=str,
+          location="form"
+        )
+    ],
     request=AccessSerializer,
     responses={
       200: {
@@ -69,14 +75,14 @@ class LoginView(APIView):
                 description="Email address or nickname of the user.",
                 required=True,
                 type=str,
-                location=OpenApiParameter.QUERY,
+                location="form",
             ),
             OpenApiParameter(
                 name="password",
                 description="User password.",
                 required=True,
                 type=str,
-                location=OpenApiParameter.QUERY,
+                location="form",
             ),
         ],
       request=LoginSerializer,
@@ -135,53 +141,95 @@ class LoginView(APIView):
         return Response({'is_valid': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class RegisterCustomerView(APIView):
+    @extend_schema(
+        summary="Register Customer API",
+        description="Registers a new customer account.",
+        request=RegisterCostumerSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="access_token",
+                description="Access token for authentication.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="name",
+                description="User's name.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="nickname",
+                description="User's nickname.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="email",
+                description="User's email address.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="password",
+                description="User password.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="photo",
+                description="User's profile photo (optional).",
+                required=False,
+                type=OpenApiTypes.BINARY,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="type",
+                description="Type of customer (1 or 2).",
+                required=True,
+                type=OpenApiTypes.NUMBER,
+                location="form",
+            ),
+        ],
+        responses={
+            200: {
+                "description": "Successful registration - Returns a success message.",
+                "example": {
+                    "response": "User created"
+                }
+            },
+            400: {
+                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Unauthorized User"
+                }
+            },
+            409: {
+                "description": "Conflict. User with this email/nickname already exists.",
+                "example": {
+                    "error": "User already exists"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
     def post(self, request):
-        """
-        Register Customer API.
-
-        Registers a new customer account.
-        
-        ---
-        parameters:
-          - access_token: Access token for authentication.
-            - required: true
-            - type: string
-          - name: User's name.
-            - required: true
-            - type: string
-          - nickname: User's nickname.
-            - required: true
-            - type: string
-          - email: User's email address.
-            - required: true
-            - type: string
-          - password: User password.
-            - required: true
-            - type: string
-          - photo: User's profile photo (optional).
-            - required: false
-            - type: file
-          - type: Type of customer (1 or 2).
-            - required: true
-            - type: integer 
-            \n
-        responses:
-          - 200: Successful registration - Returns a success message.
-            - response: Success message indicating the user has been created.
-              - type: string
-          - 400: Bad request. Invalid token or missing/invalid parameters.
-            - error: Error message indicating the issue.
-              - type: string
-          - 401: Unauthorized. Invalid access token.
-            - error: Error message indicating the issue.
-              - type: string
-          - 400: Bad request. User with this email/nickname already exists.
-            - error: Error message indicating the issue.
-              - type: string
-          - 500: Internal Server Error.
-            - error: Error message indicating the issue.
-              - type: string
-        """
         try:
             serializer = RegisterCostumerSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
