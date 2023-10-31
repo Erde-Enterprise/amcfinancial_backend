@@ -11,8 +11,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 import base64
 import os
 
-from .models import User_Root, Customer
-from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer
+from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
+from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer
 from .middleware import teste_token
 
 
@@ -235,7 +235,7 @@ class RegisterCustomerView(APIView):
             serializer = RegisterCostumerSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             validation = teste_token(serializer.validated_data['access_token'])
-            
+
             if validation['validity']:
                 if validation['type'] == 0:
                     customer = Customer.objects.filter(Q(email=serializer.validated_data['email']) | Q(nickname=serializer.validated_data['nickname'])).first() 
@@ -271,4 +271,43 @@ class RegisterCustomerView(APIView):
             return Response({'error': 'Integrity Error'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
+class RegisterClinicView(APIView):
+     @extend_schema(
+        summary="Register Clinic API",
+        description="Registers a new clinic account.",
+        request=RegisterClinicSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                description="Clinic's name.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="color",
+                description="Clinic's color.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+        ],
+        responses={
+            200: {
+                "description": "Successful registration - Returns a success message.",
+                "example": {
+                    "response": "Clinic created"
+                }
+            }
+        }
+      )
+     def post(self, request):
+        serializer = RegisterClinicSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        clinic = Medical_Clinic.objects.create(
+            name=serializer.validated_data['name'],
+            color=serializer.validated_data['color']
+        )
+        clinic.save()
+        return Response({'response': 'Clinic created'}, status=status.HTTP_200_OK)
