@@ -279,6 +279,13 @@ class RegisterClinicView(APIView):
         request=RegisterClinicSerializer,
         parameters=[
             OpenApiParameter(
+                name="access_token",
+                description="Access token for authentication.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
                 name="name",
                 description="Clinic's name.",
                 required=True,
@@ -299,15 +306,54 @@ class RegisterClinicView(APIView):
                 "example": {
                     "response": "Clinic created"
                 }
+            },
+            400: {
+                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Unauthorized User"
+                }
+            },
+            409: {
+                "description": "Conflict. Clinic with this name already exists.",
+                "example": {
+                    "error": "Clinic already exists"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
             }
         }
       )
+     
      def post(self, request):
-        serializer = RegisterClinicSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        clinic = Medical_Clinic.objects.create(
-            name=serializer.validated_data['name'],
-            color=serializer.validated_data['color']
-        )
-        clinic.save()
-        return Response({'response': 'Clinic created'}, status=status.HTTP_200_OK)
+        try:  
+          serializer = RegisterClinicSerializer(data=request.data)
+          serializer.is_valid(raise_exception=True)
+          validation = teste_token(serializer.validated_data['access_token'])
+          if validation['validity']:
+              if validation['type'] == 0:
+                  clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name']).first()
+                  if not clinic:
+                      clinic = Medical_Clinic.objects.create(
+                          name=serializer.validated_data['name'],
+                          color=serializer.validated_data['color'],
+                      )
+                      clinic.save()
+                      return Response({'response': 'Clinic created'}, status=status.HTTP_200_OK)
+                  else:
+                      return Response({'error': 'Clinic already exists'}, status=status.HTTP_409_CONFLICT)
+              else:
+                  return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+          else:
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+          return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -17,9 +17,11 @@ class RegisterCostumerSerializer(serializers.Serializer):
     type = serializers.IntegerField() 
 
 class RegisterClinicSerializer(serializers.Serializer):
+    access_token = serializers.CharField()
     name = serializers.CharField()
     color = serializers.CharField()
 class RegisterInvoiceSerializer(serializers.Serializer):
+    access_token = serializers.CharField()
     invoice_number = serializers.CharField()
     description = serializers.CharField(required=False)
     amount = serializers.IntegerField()
