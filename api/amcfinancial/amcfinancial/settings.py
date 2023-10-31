@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import sys
+import os
 sys.path.append('..')
 from databaseconf import NAME, USER, PASSWORD, HOST
 from datetime import timedelta
@@ -147,14 +148,13 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Documentation for AMCFINANCIAL API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # OTHER SETTINGS
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=120),
-    'SLIDING_TOKEN_LIFETIME_LAMBDA': lambda token: timedelta(days=1) if token.user.is_staff else timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(hours=12),
+    'SLIDING_TOKEN_LIFETIME': timedelta(hours=12),
+    'SLIDING_TOKEN_LIFETIME_LAMBDA': lambda token: timedelta(hours=12) if token.user.is_staff else timedelta(hours=12),
     'ROTATE_REFRESH_TOKENS': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -168,3 +168,5 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+MEDIA_URL = '/media/' 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/') 
