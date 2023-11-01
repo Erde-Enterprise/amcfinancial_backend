@@ -1,5 +1,7 @@
 
 from django.db import models
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 class User_Root(models.Model):
     id = models.AutoField(primary_key=True)
@@ -17,6 +19,11 @@ class Customer(models.Model):
     photo = models.BinaryField(null=True, blank=True)
     type = models.IntegerField()
     root = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
+
+class UserProfile(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    user = GenericForeignKey('content_type', 'object_id')
 
 class Medical_Clinic(models.Model):
     id = models.AutoField(primary_key=True)
@@ -36,11 +43,12 @@ class Invoice(models.Model):
     status = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
     clinic = models.ForeignKey(Medical_Clinic, on_delete=models.SET_NULL, null=True)
-    user = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
-    root = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
+
 
 class Access_History(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
     login_date = models.DateTimeField()
     location = models.CharField(max_length=255)
+

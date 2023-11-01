@@ -12,8 +12,9 @@ import base64
 import os
 
 from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
-from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer
+from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer
 from .middleware import teste_token
+from .provides import user_profile_type
 
 
 class ValidateTokenView(APIView):
@@ -104,42 +105,51 @@ class LoginView(APIView):
                 "example": {
                     "error": 'Unauthorized User'
                   }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
             }
         },
     )
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email_or_nickname = serializer.validated_data['email_or_nickname']
-        password = serializer.validated_data['password']
+        try:
+          serializer = LoginSerializer(data=request.data)
+          serializer.is_valid(raise_exception=True)
+          email_or_nickname = serializer.validated_data['email_or_nickname']
+          password = serializer.validated_data['password']
 
-        user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
-        if user_root and check_password(password, user_root.password):
-            image_binary_data = user_root.photo
-            image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
-            refresh = RefreshToken.for_user(user_root)
-            refresh['type'] = 0
-            return Response({'token': str(refresh),
-                            'email': user_root.email_root,
-                            'nickname': user_root.nickname,
-                            'name': user_root.name,
-                            'photo': image_base64,
-                            'user_type': 0}, status=status.HTTP_200_OK)
-        
-        customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
-        if customer and check_password(password, customer.password):
-            image_binary_data = customer.photo
-            image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
-            refresh = RefreshToken.for_user(customer)
-            refresh['type'] =customer.type
-            return Response({'token': str(refresh),
-                            'email': customer.email,
-                            'nickname': customer.nickname,
-                            'name': customer.name,
-                            'photo': image_base64,
-                            'user_type': customer.type}, status=status.HTTP_200_OK)
-        
-        return Response({'is_valid': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+          user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
+          if user_root and check_password(password, user_root.password):
+              image_binary_data = user_root.photo
+              image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
+              refresh = RefreshToken.for_user(user_root)
+              refresh['type'] = 0
+              return Response({'token': str(refresh),
+                              'email': user_root.email_root,
+                              'nickname': user_root.nickname,
+                              'name': user_root.name,
+                              'photo': image_base64,
+                              'user_type': 0}, status=status.HTTP_200_OK)
+          
+          customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
+          if customer and check_password(password, customer.password):
+              image_binary_data = customer.photo
+              image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
+              refresh = RefreshToken.for_user(customer)
+              refresh['type'] =customer.type
+              return Response({'token': str(refresh),
+                              'email': customer.email,
+                              'nickname': customer.nickname,
+                              'name': customer.name,
+                              'photo': image_base64,
+                              'user_type': customer.type}, status=status.HTTP_200_OK)
+          
+          return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class RegisterCustomerView(APIView):
     @extend_schema(
@@ -357,3 +367,167 @@ class RegisterClinicView(APIView):
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
         except:
           return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class RegisterInvoiceView(APIView):
+    @extend_schema(
+        summary="Register Invoice API",
+        description="Registers a new invoice.",
+        request=RegisterInvoiceSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="access_token",
+                description="Access token for authentication.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="invoice_number",
+                description="Invoice's number.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="description",
+                description="Invoice's description.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="amount",
+                description="Invoice's amount.",
+                required=True,
+                type=OpenApiTypes.INT,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="title",
+                description="Invoice's title.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="issue_date",
+                description="Invoice's issue date.",
+                required=True,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="due_date",
+                description="Invoice's due date.",
+                required=True,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="attachment",
+                description="Invoice's attachment.",
+                required=True,
+                type=OpenApiTypes.BINARY,
+            ),
+            OpenApiParameter(
+                name="status",
+                description="Invoice's status.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="type",
+                description="Invoice's type.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="name_clinic",
+                description="Clinic's name.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            )
+        ],
+        responses={
+            200: {
+                "description": "Successful registration - Returns a success message.",
+                "example": {
+                    "response": "Invoice created"
+                }
+            },
+            400: {
+                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Unauthorized User"
+                }
+            },
+            404: {
+                "description": "Not Found. Clinic not found.",
+                "example": {
+                    "error": "Clinic not found"
+                }
+            },
+            409: {
+                "description": "Conflict. Invoice with this number already exists.",
+                "example": {
+                    "error": "Invoice already exists"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
+    
+    def post(self, request):
+        try:
+            serializer = RegisterInvoiceSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            validation = teste_token(serializer.validated_data['access_token'])
+            if validation['validity']:
+                if validation['type'] == 0 or validation['type'] == 1:
+                    user = user_profile_type(validation)
+                    attachment_bytes = request.FILES['attachment'].read() 
+                    invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
+                    clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name_clinic']).first()
+                    if clinic:
+                      if not invoice:
+                          invoice = Invoice.objects.create(
+                              invoice_number=serializer.validated_data['invoice_number'],
+                              description=serializer.validated_data['description'],
+                              amount=serializer.validated_data['amount'],
+                              title=serializer.validated_data['title'],
+                              issue_date=serializer.validated_data['issue_date'],
+                              due_date=serializer.validated_data['due_date'],
+                              attachment=attachment_bytes,
+                              reminder= 0,
+                              status=serializer.validated_data['status'],
+                              type=serializer.validated_data['type'],
+                              clinic=clinic,
+                              user= user
+                          )
+                          invoice.save()
+                          return Response({'response': 'Invoice created'}, status=status.HTTP_200_OK)
+                      else:
+                          return Response({'error': 'Invoice already exists'}, status=status.HTTP_409_CONFLICT)
+                    else:
+                        return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+          
