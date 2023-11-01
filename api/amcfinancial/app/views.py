@@ -12,60 +12,47 @@ import base64
 import os
 
 from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
-from .serializers import AccessSerializer, LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer
+from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer
 from .middleware import teste_token
 from .provides import user_profile_type
 
 
 class ValidateTokenView(APIView):
-  @extend_schema(
-    summary="Validates User Token API",
-    description="Validates the authenticity of a user token received in the request data.",
-    parameters=[
-        OpenApiParameter(
-          name="access_token", 
-          description="User access token to be validated", 
-          required=True,
-          type=OpenApiTypes.STR,
-          location="form"
-        )
-    ],
-    request=AccessSerializer,
-    responses={
-      200: {
-        "description": "Successful token validation.", 
-        "example": {
-          "response": "Valid token"
-        }
-      },
-      400: {
-        "description": "Invalid token or Activation Expired.", 
-        "example": {
-            "error": "Invalid token or Activation Expired"
-        }
-      },
 
-      500: {
-        "description": "Internal Server Error.", 
-        "example": {
-            "error": "Internal Server Error"
+  @extend_schema(
+        summary="Validates User Token API",
+        description="Validates the authenticity of a user token received in the Authorization header.",
+        responses={
+            200: {
+                "description": "Successful token validation.",
+                "example": {
+                    "response": "Valid token"
+                }
+            },
+            401: {
+                "description": "Invalid token or Activation Expired.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
         }
-      }
-    }
-  )
+    )
   
-  def post(self, request): 
-    try:
-      serializer = AccessSerializer(data=request.data)
-      serializer.is_valid(raise_exception=True)
-      token = serializer.validated_data['access_token']
-      validation = teste_token(token)
-      if validation['validity']:
-          return Response({'response':'Valid token'}, status=status.HTTP_200_OK)
-      else:
-          return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
-    except:
-        return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+  def get(self,request):
+      try:
+          validation = teste_token(request.headers)
+          if validation['validity']:
+              return Response({'response':'Valid token'}, status=status.HTTP_200_OK)
+          else:
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+      except:
+          return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
     @extend_schema(
@@ -154,16 +141,10 @@ class LoginView(APIView):
 class RegisterCustomerView(APIView):
     @extend_schema(
         summary="Register Customer API",
-        description="Registers a new customer account.",
+        description="Registers a new customer account."
+                    "Token received in the Authorization header.",
         request=RegisterCostumerSerializer,
         parameters=[
-            OpenApiParameter(
-                name="access_token",
-                description="Access token for authentication.",
-                required=True,
-                type=OpenApiTypes.STR,
-                location="form",
-            ),
             OpenApiParameter(
                 name="name",
                 description="User's name.",
@@ -244,7 +225,7 @@ class RegisterCustomerView(APIView):
         try:
             serializer = RegisterCostumerSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            validation = teste_token(serializer.validated_data['access_token'])
+            validation = teste_token(request.headers)
 
             if validation['validity']:
                 if validation['type'] == 0:
@@ -285,16 +266,10 @@ class RegisterCustomerView(APIView):
 class RegisterClinicView(APIView):
      @extend_schema(
         summary="Register Clinic API",
-        description="Registers a new clinic account.",
+        description="Registers a new clinic account."
+                    "Token received in the Authorization header.",
         request=RegisterClinicSerializer,
         parameters=[
-            OpenApiParameter(
-                name="access_token",
-                description="Access token for authentication.",
-                required=True,
-                type=OpenApiTypes.STR,
-                location="form",
-            ),
             OpenApiParameter(
                 name="name",
                 description="Clinic's name.",
@@ -348,7 +323,7 @@ class RegisterClinicView(APIView):
         try:  
           serializer = RegisterClinicSerializer(data=request.data)
           serializer.is_valid(raise_exception=True)
-          validation = teste_token(serializer.validated_data['access_token'])
+          validation = teste_token(request.headers)
           if validation['validity']:
               if validation['type'] == 0:
                   clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name']).first()
@@ -371,16 +346,10 @@ class RegisterClinicView(APIView):
 class RegisterInvoiceView(APIView):
     @extend_schema(
         summary="Register Invoice API",
-        description="Registers a new invoice.",
+        description="Registers a new invoice."
+                    "Token received in the Authorization header.",
         request=RegisterInvoiceSerializer,
         parameters=[
-            OpenApiParameter(
-                name="access_token",
-                description="Access token for authentication.",
-                required=True,
-                type=OpenApiTypes.STR,
-                location="form",
-            ),
             OpenApiParameter(
                 name="invoice_number",
                 description="Invoice's number.",
@@ -495,7 +464,7 @@ class RegisterInvoiceView(APIView):
         try:
             serializer = RegisterInvoiceSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            validation = teste_token(serializer.validated_data['access_token'])
+            validation = teste_token(request.headers)
             if validation['validity']:
                 if validation['type'] == 0 or validation['type'] == 1:
                     user = user_profile_type(validation)
