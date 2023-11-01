@@ -3,10 +3,8 @@ from rest_framework import serializers
 class LoginSerializer(serializers.Serializer):
     email_or_nickname = serializers.CharField()
     password = serializers.CharField()
-
 class AccessSerializer(serializers.Serializer):
     access_token = serializers.CharField()
-
 class RegisterCostumerSerializer(serializers.Serializer):
     access_token = serializers.CharField()
     name = serializers.CharField()
@@ -15,7 +13,6 @@ class RegisterCostumerSerializer(serializers.Serializer):
     password = serializers.CharField()
     photo = serializers.ImageField(required=False)
     type = serializers.IntegerField() 
-
 class RegisterClinicSerializer(serializers.Serializer):
     access_token = serializers.CharField()
     name = serializers.CharField()
@@ -28,7 +25,8 @@ class RegisterInvoiceSerializer(serializers.Serializer):
     title = serializers.CharField()
     issue_date = serializers.DateField()
     due_date = serializers.DateField()
-    attachment = serializers.ImageField(required=False)
-    reminder = serializers.IntegerField()
+    attachment = serializers.FileField()
     status = serializers.CharField()
     type = serializers.CharField()
+    name_clinic = serializers.CharField()
+
