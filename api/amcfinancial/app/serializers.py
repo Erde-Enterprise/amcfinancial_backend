@@ -3,7 +3,6 @@ from rest_framework import serializers
 class LoginSerializer(serializers.Serializer):
     email_or_nickname = serializers.CharField()
     password = serializers.CharField()
-    access_token = serializers.CharField()
 class RegisterCostumerSerializer(serializers.Serializer):
     name = serializers.CharField()
     nickname = serializers.CharField()

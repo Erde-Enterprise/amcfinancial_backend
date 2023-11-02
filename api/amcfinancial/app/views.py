@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -87,6 +87,12 @@ class LoginView(APIView):
                     "user_type": 1,
                 }
             },
+            400: {
+                "description": "Bad Request. Invalid email or nickname.",
+                "example": {
+                    "error": "Bad Request. Invalid email or nickname."
+                }
+            },
             401: {
                 "description": "Unauthorized. Invalid credentials.",
                 "example": {
@@ -135,9 +141,13 @@ class LoginView(APIView):
                               'user_type': customer.type}, status=status.HTTP_200_OK)
           
           return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+# Register Endpoint's
 class RegisterCustomerView(APIView):
     @extend_schema(
         summary="Register Customer API",
@@ -197,8 +207,8 @@ class RegisterCustomerView(APIView):
             },
             400: {
                 "description": "Bad request. Invalid token or missing/invalid parameters.",
-                "example": {
-                    "error": "Invalid token or Activation Expired"
+                "example" : {
+                    "error": "Bad request. Invalid token or missing/invalid parameters."
                 }
             },
             401: {
@@ -258,6 +268,9 @@ class RegisterCustomerView(APIView):
                     return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
             return Response({'error': 'Integrity Error'}, status=status.HTTP_400_BAD_REQUEST)
         except:
@@ -295,7 +308,7 @@ class RegisterClinicView(APIView):
             400: {
                 "description": "Bad request. Invalid token or missing/invalid parameters.",
                 "example": {
-                    "error": "Invalid token or Activation Expired"
+                    "error": "Bad request. Invalid token or missing/invalid parameters."
                 }
             },
             401: {
@@ -340,6 +353,9 @@ class RegisterClinicView(APIView):
                   return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
           else:
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
           return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -430,7 +446,7 @@ class RegisterInvoiceView(APIView):
             400: {
                 "description": "Bad request. Invalid token or missing/invalid parameters.",
                 "example": {
-                    "error": "Invalid token or Activation Expired"
+                    "error": "Bad request. Invalid token or missing/invalid parameters."
                 }
             },
             401: {
@@ -467,12 +483,12 @@ class RegisterInvoiceView(APIView):
             validation = teste_token(request.headers)
             if validation['validity']:
                 if validation['type'] == 0 or validation['type'] == 1:
-                    user = user_profile_type(validation)
                     attachment_bytes = request.FILES['attachment'].read() 
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name_clinic']).first()
                     if clinic:
                       if not invoice:
+                          user = user_profile_type(validation)
                           invoice = Invoice.objects.create(
                               invoice_number=serializer.validated_data['invoice_number'],
                               description=serializer.validated_data['description'],
@@ -497,6 +513,15 @@ class RegisterInvoiceView(APIView):
                     return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
           
+#List Endpoint's
+
+# class ListLatestInvoicesView(APIView):
+#     def get(self, request):
+#         try:
+            
