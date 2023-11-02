@@ -102,7 +102,7 @@ class LoginView(APIView):
         },
     )
     def post(self, request):
-        try:
+        # try:
           serializer = LoginSerializer(data=request.data)
           serializer.is_valid(raise_exception=True)
           email_or_nickname = serializer.validated_data['email_or_nickname']
@@ -135,9 +135,10 @@ class LoginView(APIView):
                               'user_type': customer.type}, status=status.HTTP_200_OK)
           
           return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
-        except:
-            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # except:
+        #     return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+# Register Endpoint's
 class RegisterCustomerView(APIView):
     @extend_schema(
         summary="Register Customer API",
@@ -467,12 +468,12 @@ class RegisterInvoiceView(APIView):
             validation = teste_token(request.headers)
             if validation['validity']:
                 if validation['type'] == 0 or validation['type'] == 1:
-                    user = user_profile_type(validation)
                     attachment_bytes = request.FILES['attachment'].read() 
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name_clinic']).first()
                     if clinic:
                       if not invoice:
+                          user = user_profile_type(validation)
                           invoice = Invoice.objects.create(
                               invoice_number=serializer.validated_data['invoice_number'],
                               description=serializer.validated_data['description'],
@@ -500,3 +501,9 @@ class RegisterInvoiceView(APIView):
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
           
+#List Endpoint's
+
+# class ListLatestInvoicesView(APIView):
+#     def get(self, request):
+#         try:
+            
