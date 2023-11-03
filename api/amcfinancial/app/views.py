@@ -12,7 +12,7 @@ import base64
 import os
 
 from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
-from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListInvoicesSerializer
+from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer
 from .middleware import teste_token
 from .provides import user_profile_type
 
@@ -620,3 +620,63 @@ class ListAllInvoicesView(APIView):
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class AttachmentView(APIView):
+    @extend_schema(
+        summary="Get Attachment API",
+        description="Gets the attachment of an invoice.",
+        request=AttachmentSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="invoice_number",
+                description="Invoice's number.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            )
+        ],
+        responses={
+            200: {
+                "description": "GET request successful. Returns the attachment of the invoice.",
+                "example": {
+                    "attachment": "base64 encoded string"
+                }
+            },
+            400: {
+                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                }
+            },
+            404: {
+                "description": "Invoice not found.",
+                "example": {
+                    "error": "Invoice not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
+    def post(self, request):
+        try:
+          validation = teste_token(request.headers)
+          serializer = AttachmentSerializer(data=request.data)
+          serializer.is_valid(raise_exception=True)
+          if validation['validity']:
+              invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
+              attachment_data = invoice.attachment
+              attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
+              return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+          else:
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

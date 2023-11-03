@@ -38,5 +38,6 @@ class ListInvoicesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         exclude =('id','attachment','user')
-
+class AttachmentSerializer(serializers.Serializer):
+    invoice_number = serializers.CharField()
 
