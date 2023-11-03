@@ -88,9 +88,9 @@ class LoginView(APIView):
                 }
             },
             400: {
-                "description": "Bad Request. Invalid email or nickname.",
+                "description": "Bad Request. Invalid/missing email or nickname.",
                 "example": {
-                    "error": "Bad Request. Invalid email or nickname."
+                    "error": "Bad Request. Invalid/missing email or nickname."
                 }
             },
             401: {
@@ -199,22 +199,28 @@ class RegisterCustomerView(APIView):
             ),
         ],
         responses={
-            200: {
+            201: {
                 "description": "Successful registration - Returns a success message.",
                 "example": {
                     "response": "User created"
                 }
             },
             400: {
-                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "description": "Bad request. Missing/invalid parameters.",
                 "example" : {
-                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                    "error": "Bad request. Missing/invalid parameters."
                 }
             },
             401: {
                 "description": "Unauthorized. Invalid access token.",
                 "example": {
-                    "error": "Unauthorized User"
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
                 }
             },
             409: {
@@ -261,13 +267,13 @@ class RegisterCustomerView(APIView):
                           root=userRoot
                       ) 
                       customer.save()
-                      return Response({'response': 'User created'}, status=status.HTTP_200_OK)
+                      return Response({'response': 'User created'}, status=status.HTTP_201_CREATED)
                     else:
                         return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
                 else:
-                    return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
-                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except serializers.ValidationError as e:
           errors = dict(e.detail)  
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
@@ -299,22 +305,28 @@ class RegisterClinicView(APIView):
             ),
         ],
         responses={
-            200: {
+            201: {
                 "description": "Successful registration - Returns a success message.",
                 "example": {
                     "response": "Clinic created"
                 }
             },
             400: {
-                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "description": "Bad request. Missing/invalid parameters.",
                 "example": {
-                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                    "error": "Bad request. Missing/invalid parameters."
                 }
             },
             401: {
                 "description": "Unauthorized. Invalid access token.",
                 "example": {
-                    "error": "Unauthorized User"
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
                 }
             },
             409: {
@@ -346,13 +358,13 @@ class RegisterClinicView(APIView):
                           color=serializer.validated_data['color'],
                       )
                       clinic.save()
-                      return Response({'response': 'Clinic created'}, status=status.HTTP_200_OK)
+                      return Response({'response': 'Clinic created'}, status=status.HTTP_201_CREATED)
                   else:
                       return Response({'error': 'Clinic already exists'}, status=status.HTTP_409_CONFLICT)
               else:
-                  return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+                  return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
           else:
-              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except serializers.ValidationError as e:
           errors = dict(e.detail)  
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
@@ -437,22 +449,28 @@ class RegisterInvoiceView(APIView):
             )
         ],
         responses={
-            200: {
+            201: {
                 "description": "Successful registration - Returns a success message.",
                 "example": {
                     "response": "Invoice created"
                 }
             },
             400: {
-                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "description": "Bad request. Missing/invalid parameters.",
                 "example": {
-                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                    "error": "Bad request. Missing/invalid parameters."
                 }
             },
             401: {
                 "description": "Unauthorized. Invalid access token.",
                 "example": {
-                    "error": "Unauthorized User"
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
                 }
             },
             404: {
@@ -504,15 +522,15 @@ class RegisterInvoiceView(APIView):
                               user= user
                           )
                           invoice.save()
-                          return Response({'response': 'Invoice created'}, status=status.HTTP_200_OK)
+                          return Response({'response': 'Invoice created'}, status=status.HTTP_201_CREATED)
                       else:
                           return Response({'error': 'Invoice already exists'}, status=status.HTTP_409_CONFLICT)
                     else:
                         return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
                 else:
-                    return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
-                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except serializers.ValidationError as e:
           errors = dict(e.detail)  
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
@@ -520,60 +538,12 @@ class RegisterInvoiceView(APIView):
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
           
 #List Endpoint's
-
-class ListLatestInvoicesView(APIView):
-    @extend_schema(
-        summary="List Latest Invoices API",
-        description="Lists the latest invoices.",
-        responses={
-            200: {
-                "description": "GET request successful. Returns a list of 25 latest invoices.",
-                "example": {
-                    "clinic": {
-                      "name": "Clinic Name",
-                      "color": "Color"
-                    },
-                    "invoice_number": "Invoice Number",
-                    "description": "Description of the invoice",
-                    "amount": "100",
-                    "title": "Title",
-                    "issue_date": "2023-05-01",
-                    "due_date": "2023-05-01",
-                    "reminder": 0,
-                    "status": "Pending",
-                    "type": "Invoice",
-                }
-            },
-            400: {
-                "description": "Bad request. Invalid token or missing/invalid parameters.",
-                "example": {
-                    "error": "Bad request. Invalid token or missing/invalid parameters."
-                }
-            },
-            500: {
-                "description": "Internal Server Error.",
-                "example": {
-                    "error": "Internal Server Error"
-                }
-            }
-        }
-    )
-    def get(self, request):
-        try:
-            validation = teste_token(request.headers)
-            if validation['validity']:
-                invoices = Invoice.objects.all().order_by('-id')[:25]
-                serializer = ListInvoicesSerializer(invoices, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class ListAllInvoicesView(APIView):
+class ListInvoicesView(APIView):
     @extend_schema(
         summary="List All Invoices API",
-        description="Lists all invoices.",
+        description="Lists all invoices."
+                    "Token received in the Authorization header.",
         responses={
             200: {
                 "description": "GET request successful. Returns a list of all invoices.",
@@ -594,10 +564,10 @@ class ListAllInvoicesView(APIView):
 
                 }
             },
-            400: {
-                "description": "Bad request. Invalid token or missing/invalid parameters.",
+            401: {
+                "description": "Invalid token or Activation Expired.",
                 "example": {
-                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                    "error": "Invalid token or Activation Expired."
                 }
             },
             500: {
@@ -616,14 +586,15 @@ class ListAllInvoicesView(APIView):
             serializer = ListInvoicesSerializer(invoices, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
           else:
-            return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AttachmentView(APIView):
     @extend_schema(
         summary="Get Attachment API",
-        description="Gets the attachment of an invoice.",
+        description="Gets the attachment of an invoice."
+                    "Token received in the Authorization header.",
         request=AttachmentSerializer,
         parameters=[
             OpenApiParameter(
@@ -642,9 +613,15 @@ class AttachmentView(APIView):
                 }
             },
             400: {
-                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "description": "Bad request. Missing/invalid parameters.",
                 "example": {
-                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired."
                 }
             },
             404: {
@@ -672,7 +649,7 @@ class AttachmentView(APIView):
               attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
               return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
           else:
-              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except Invoice.DoesNotExist:
             return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
         except serializers.ValidationError as e:
