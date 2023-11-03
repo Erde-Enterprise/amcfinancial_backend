@@ -12,7 +12,7 @@ import base64
 import os
 
 from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
-from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer
+from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListLatestInvoicesSerializer
 from .middleware import teste_token
 from .provides import user_profile_type
 
@@ -521,7 +521,57 @@ class RegisterInvoiceView(APIView):
           
 #List Endpoint's
 
-# class ListLatestInvoicesView(APIView):
-#     def get(self, request):
-#         try:
-            
+class ListLatestInvoicesView(APIView):
+    @extend_schema(
+        summary="List Latest Invoices API",
+        description="Lists the latest invoices.",
+        responses={
+            200: {
+                "description": "Successful registration - Returns a success message.",
+                "example": {
+                    "clinic": {
+                      "name": "Clinic Name",
+                      "color": "Color"
+                    },
+                    "invoice_number": "Invoice Number",
+                    "description": "Description of the invoice",
+                    "amount": "100",
+                    "title": "Title",
+                    "issue_date": "2023-05-01",
+                    "due_date": "2023-05-01",
+                    "reminder": 0,
+                    "status": "Pending",
+                    "type": "Invoice",
+                }
+            },
+            400: {
+                "description": "Bad request. Invalid token or missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Invalid token or missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Unauthorized User"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
+    def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                invoices = Invoice.objects.all().order_by('-id')[:25]
+                serializer = ListLatestInvoicesSerializer(invoices, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
