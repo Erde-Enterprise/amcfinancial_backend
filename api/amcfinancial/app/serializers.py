@@ -41,3 +41,6 @@ class ListInvoicesSerializer(serializers.ModelSerializer):
 class AttachmentSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
 
+class ListSizeSerializer(serializers.Serializer):
+    size = serializers.IntegerField(required=False)
+

@@ -12,7 +12,7 @@ import base64
 import os
 
 from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
-from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer
+from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListInvoicesSerializer, ListSizeSerializer, AttachmentSerializer
 from .middleware import teste_token
 from .provides import user_profile_type
 
@@ -541,12 +541,22 @@ class RegisterInvoiceView(APIView):
         
 class ListInvoicesView(APIView):
     @extend_schema(
-        summary="List All Invoices API",
-        description="Lists all invoices."
+        summary="List Invoices API",
+        description="Returns all invoices if no parameters are passed. If 'Size' is passed, its value will be the number of Invoices returned."
                     "Token received in the Authorization header.",
+        request=ListSizeSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="size",
+                description="Number of invoices to return.",
+                required=False,
+                type=OpenApiTypes.INT,
+                location="query",
+            )
+        ],
         responses={
             200: {
-                "description": "GET request successful. Returns a list of all invoices.",
+                "description": "GET request successful. Returns a list of invoices.",
                 "example": {
                     "clinic": {
                       "name": "Clinic Name",
@@ -564,6 +574,12 @@ class ListInvoicesView(APIView):
 
                 }
             },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
             401: {
                 "description": "Invalid token or Activation Expired.",
                 "example": {
@@ -578,15 +594,24 @@ class ListInvoicesView(APIView):
             }
         }
     )
-    def get(self, request):
+    def post(self, request):
         try:
           validation = teste_token(request.headers)
           if validation['validity']:
-            invoices = Invoice.objects.all()
-            serializer = ListInvoicesSerializer(invoices, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            request_serializer = ListSizeSerializer(data=request.data)  
+            request_serializer.is_valid(raise_exception=True)
+            size = request_serializer.validated_data.get("size", False)
+            if size:
+              invoices = Invoice.objects.all()[:size]
+            else:
+              invoices = Invoice.objects.all()
+            reponse_serializer = ListInvoicesSerializer(invoices, many=True)
+            return Response(reponse_serializer.data, status=status.HTTP_200_OK)
           else:
             return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -605,7 +630,8 @@ class AttachmentView(APIView):
                 location="form",
             )
         ],
-        responses={
+        responses=
+        {
             200: {
                 "description": "GET request successful. Returns the attachment of the invoice.",
                 "example": {
