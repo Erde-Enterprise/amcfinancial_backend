@@ -29,12 +29,12 @@ class RegisterInvoiceSerializer(serializers.Serializer):
     type = serializers.CharField()
     name_clinic = serializers.CharField()
 
-class MedicalClinicNameSerializer(serializers.ModelSerializer):
+class MedicalClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medical_Clinic
         fields = ('name','color')
-class ListLatestInvoicesSerializer(serializers.ModelSerializer):
-    clinic = MedicalClinicNameSerializer()
+class ListInvoicesSerializer(serializers.ModelSerializer):
+    clinic = MedicalClinicSerializer()
     class Meta:
         model = Invoice
         exclude =('id','attachment','user')
