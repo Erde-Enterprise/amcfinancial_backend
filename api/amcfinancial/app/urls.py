@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ValidateTokenView, LoginView, RegisterCustomerView, RegisterClinicView, RegisterInvoiceView,  ListInvoicesView, AttachmentView
+from .views import ValidateTokenView, LoginView, RegisterCustomerView, RegisterClinicView, RegisterInvoiceView,  ListInvoicesView, AttachmentView, DeleteCustomerView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
@@ -11,6 +11,8 @@ urlpatterns = [
     path('register/invoice/', RegisterInvoiceView.as_view(), name='register-invoice'),
     # LIST
     path('list/invoices/', ListInvoicesView.as_view(), name='list-all-invoices'),
+    # DELETE
+    path('delete/customer/', DeleteCustomerView.as_view(), name='delete-customer'),
     # OTHERS
     path('attachment/', AttachmentView.as_view(), name='attachment'),
     # SWAGGER

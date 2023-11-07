@@ -12,7 +12,7 @@ import base64
 import os
 
 from .models import User_Root, Customer, Medical_Clinic, Invoice, Access_History
-from .serializers import LoginSerializer, RegisterCostumerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListInvoicesSerializer, ListSizeSerializer, AttachmentSerializer
+from .serializers import LoginSerializer, RegisterCustomerSerializer, RegisterClinicSerializer, RegisterInvoiceSerializer, ListInvoicesSerializer, ListDateSerializer, AttachmentSerializer, CustomerSerializer
 from .middleware import teste_token
 from .provides import user_profile_type
 
@@ -153,7 +153,7 @@ class RegisterCustomerView(APIView):
         summary="Register Customer API",
         description="Registers a new customer account."
                     "Token received in the Authorization header.",
-        request=RegisterCostumerSerializer,
+        request=RegisterCustomerSerializer,
         parameters=[
             OpenApiParameter(
                 name="name",
@@ -239,7 +239,7 @@ class RegisterCustomerView(APIView):
     )
     def post(self, request):
         try:
-            serializer = RegisterCostumerSerializer(data=request.data)
+            serializer = RegisterCustomerSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             validation = teste_token(request.headers)
 
@@ -544,7 +544,7 @@ class ListInvoicesView(APIView):
         summary="List Invoices API",
         description="Returns all invoices if no parameters are passed. If 'Size' is passed, its value will be the number of Invoices returned."
                     "Token received in the Authorization header.",
-        request=ListSizeSerializer,
+        request=ListDateSerializer,
         parameters=[
             OpenApiParameter(
                 name="size",
@@ -598,11 +598,12 @@ class ListInvoicesView(APIView):
         try:
           validation = teste_token(request.headers)
           if validation['validity']:
-            request_serializer = ListSizeSerializer(data=request.data)  
-            request_serializer.is_valid(raise_exception=True)
-            size = request_serializer.validated_data.get("size", False)
-            if size:
-              invoices = Invoice.objects.all()[:size]
+            serializer = ListDateSerializer(data=request.data)  
+            serializer.is_valid(raise_exception=True)
+            start_date = serializer.validated_data.get('start_date')
+            end_date = serializer.validated_data.get('end_date')
+            if start_date and end_date:
+              invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
             else:
               invoices = Invoice.objects.all()
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)
@@ -683,3 +684,28 @@ class AttachmentView(APIView):
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Delete Endpoint's
+
+class DeleteCustomerView(APIView):
+   def delete(self,request):
+    try:
+      validation = teste_token(request.headers)
+      serializer = CustomerSerializer(data=request.data)
+      serializer.is_valid(raise_exception=True)
+      if validation['validity']:
+            if validation['type'] == 0:
+                customer = Customer.objects.get(nickname=serializer.validated_data['nickname'])
+                customer.delete()
+                return Response({"message": "Customer deleted successfully"}, status=status.HTTP_200_OK)
+            else:
+               return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+      else:
+        return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+    except Customer.DoesNotExist:
+        return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
+    except serializers.ValidationError as e:
+      errors = dict(e.detail)  
+      return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+    except:
+        return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
