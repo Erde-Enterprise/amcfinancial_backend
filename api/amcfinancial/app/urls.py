@@ -1,5 +1,8 @@
 from django.urls import path
-from .views import ValidateTokenView, LoginView, RegisterCustomerView, RegisterClinicView, RegisterInvoiceView,  ListInvoicesView, AttachmentView, DeleteCustomerView
+from .views.customer import RegisterCustomerView, DeleteCustomerView
+from .views.others import ValidateTokenView, LoginView
+from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView
+from .views.clinic import RegisterClinicView    
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
