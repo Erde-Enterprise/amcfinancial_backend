@@ -5,7 +5,7 @@ class LoginSerializer(serializers.Serializer):
     email_or_nickname = serializers.CharField()
     password = serializers.CharField()
 
-class RegisterCostumerSerializer(serializers.Serializer):
+class RegisterCustomerSerializer(serializers.Serializer):
     name = serializers.CharField()
     nickname = serializers.CharField()
     email = serializers.EmailField()
@@ -41,6 +41,9 @@ class ListInvoicesSerializer(serializers.ModelSerializer):
 class AttachmentSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
 
-class ListSizeSerializer(serializers.Serializer):
-    size = serializers.IntegerField(required=False)
+class ListDateSerializer(serializers.Serializer):
+    start_date = serializers.DateField(required=False)
+    end_date = serializers.DateField(required=False)
 
+class CustomerSerializer(serializers.Serializer):
+    nickname = serializers.CharField()
