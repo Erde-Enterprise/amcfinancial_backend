@@ -547,11 +547,18 @@ class ListInvoicesView(APIView):
         request=ListDateSerializer,
         parameters=[
             OpenApiParameter(
-                name="size",
-                description="Number of invoices to return.",
-                required=False,
-                type=OpenApiTypes.INT,
-                location="query",
+              name="start_date",
+              description="Start Date.",
+              required=False,
+              type=OpenApiTypes.DATE,
+              location="form",  
+            ),
+            OpenApiParameter(
+              name="end_date",
+              description="End Date.",
+              required=False,
+              type=OpenApiTypes.DATE,
+              location="form",  
             )
         ],
         responses={
