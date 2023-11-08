@@ -147,6 +147,57 @@ class RegisterCustomerView(APIView):
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class DeleteCustomerView(APIView):
+   @extend_schema(
+       summary="Delete Customer API",
+       request=CustomerSerializer,
+       parameters=[
+           OpenApiParameter(
+               name="nickname",
+               description="User's nickname.",
+               required=True,
+               type=OpenApiTypes.STR,
+               location="form",
+           )
+       ],
+       responses={
+           200: {
+               "description": "Successful deletion - Returns a success message.",
+               "example": {
+                   "response": "Customer deleted successfully"
+               }
+           },
+           400: {
+               "description": "Bad request. Missing/invalid parameters.",
+               "example": {
+                   "error": "Bad request. Missing/invalid parameters."
+               }
+           },
+           401: {
+               "description": "Unauthorized. Invalid access token.",
+               "example": {
+                   "error": "Invalid token or Activation Expired"
+               }
+           },
+           403: {
+               "description": "Forbidden. Invalid user type.",
+               "example": {
+                   "error": "Invalid User Type"
+               }
+            },
+            404: {
+                "description": "Not Found. Customer not found.",
+                "example": {
+                    "error": "Customer not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+       }
+   )
    def delete(self,request):
     try:
       validation = teste_token(request.headers)

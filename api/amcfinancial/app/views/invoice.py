@@ -7,7 +7,7 @@ import base64
 
 
 from ..models import Medical_Clinic, Invoice
-from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, ListDateSerializer, AttachmentSerializer
+from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, ListDateSerializer, AttachmentSerializer, InvoiceSerializer
 from ..middleware import teste_token
 from ..provides import user_profile_type
 
@@ -177,6 +177,80 @@ class RegisterInvoiceView(APIView):
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
           
+class DeleteInvoiceView(APIView):
+    @extend_schema(
+        summary="Delete Invoice API",
+        description="Delete Invoice. Token received in the Authorization header.",
+        parameters=[
+            OpenApiParameter(
+                name="invoice_number",
+                description="Invoice's number.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            )
+        ],
+        responses={
+            200: {
+                "description": "Successful deletion - Returns a success message.",
+                "example": {
+                    "response": "Invoice deleted"
+                }
+            },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            404: {
+                "description": "Not Found. Invoice not found.",
+                "example": {
+                    "error": "Invoice not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
+    def delete(self, request):
+        try:
+            validation = teste_token(request.headers)
+            serializer = InvoiceSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if validation['validity']:
+                if validation['type'] == 0 or validation['type'] == 1:
+                    invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
+                    if invoice:
+                        invoice.delete()
+                        return Response({'response': 'Invoice deleted'}, status=status.HTTP_200_OK)
+                    else:
+                        return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class ListInvoicesView(APIView):
     @extend_schema(
         summary="List Invoices API",

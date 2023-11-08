@@ -33,11 +33,13 @@ class MedicalClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medical_Clinic
         fields = ('name','color')
+
 class ListInvoicesSerializer(serializers.ModelSerializer):
     clinic = MedicalClinicSerializer()
     class Meta:
         model = Invoice
         exclude =('id','attachment','user')
+
 class AttachmentSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
 
@@ -47,3 +49,6 @@ class ListDateSerializer(serializers.Serializer):
 
 class CustomerSerializer(serializers.Serializer):
     nickname = serializers.CharField()
+
+class InvoiceSerializer(serializers.Serializer):
+    invoice_number = serializers.CharField()
