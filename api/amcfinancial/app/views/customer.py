@@ -149,6 +149,8 @@ class RegisterCustomerView(APIView):
 class DeleteCustomerView(APIView):
    @extend_schema(
        summary="Delete Customer API",
+       description="Deletes a customer account."
+                    "Token received in the Authorization header.",
        request=CustomerSerializer,
        parameters=[
            OpenApiParameter(

@@ -7,7 +7,7 @@ import base64
 
 
 from ..models import Medical_Clinic, Invoice
-from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, ListDateSerializer, AttachmentSerializer, InvoiceSerializer
+from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, ListDateSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
 from ..middleware import teste_token
 from ..provides import user_profile_type
 
@@ -403,3 +403,171 @@ class AttachmentView(APIView):
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UpdateInvoiceView(APIView):
+    @extend_schema(
+        summary="Update Invoice API",
+        description="Updates an invoice."
+                    "Token received in the Authorization header.",
+        request=UpdateInvoiceSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="invoice_number_older",
+                description="Invoice's number older.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="invoice_number",
+                description="Invoice's number.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+
+            ),
+            OpenApiParameter(
+                name="description",
+                description="Description of the invoice.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="amount",
+                description="Amount of the invoice.",
+                required=False,
+                type=OpenApiTypes.INT,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="title",
+                description="Title of the invoice.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="issue_date",
+                description="Issue Date of the invoice.",
+                required=False,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="due_date",
+                description="Due Date of the invoice.",
+                required=False,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="attachment",
+                description="Attachment of the invoice.",
+                required=False,
+                type=OpenApiTypes.BINARY,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="reminder",
+                description="Reminder of the invoice.",
+                required=False,
+                type=OpenApiTypes.INT,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="status",
+                description="Status of the invoice.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="type",
+                description="Type of the invoice.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="name_clinic",
+                description="Name of the clinic.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            )
+        ],
+        responses={
+            200: {
+                "description": "Invoice updated.",
+                "example": {
+                    "response": "Invoice updated"
+                }
+            },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            404: {
+                "description": "Invoice not found.",
+                "example": {
+                    "error": "Invoice not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
+    def patch(self, request):
+        try:
+           data_copy = request.data.copy()
+           invoice_number_older = data_copy.pop('invoice_number_older', None)
+           invoice = Invoice.objects.get(invoice_number=invoice_number_older)
+           validation = teste_token(request.headers)
+           if validation['validity']:
+              if validation['type'] == 0  or validation['type'] == 1:
+                 name_clinic = data_copy.pop('name_clinic', None)
+                 if name_clinic:
+                    clinic = Medical_Clinic.objects.get(name=name_clinic)
+                    if clinic:
+                       invoice.clinic = clinic
+                    else:
+                       return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
+                 attachment = data_copy.pop('attachment', None)
+                 if attachment:
+                    attachment_bytes = request.FILES['attachment'].read() 
+                    invoice.attachment = attachment_bytes
+                 serializer = UpdateInvoiceSerializer(invoice, data=data_copy, partial=True)
+                 serializer.is_valid(raise_exception=True)
+                 serializer.save()
+                 return Response({'response': 'Invoice updated'}, status=status.HTTP_200_OK)
+              else:
+                 return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+           else:
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

@@ -52,3 +52,22 @@ class CustomerSerializer(serializers.Serializer):
 
 class InvoiceSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
+
+class UpdateInvoiceSerializer(serializers.Serializer):
+    invoice_number_older = serializers.CharField()
+    invoice_number = serializers.CharField(required=False)
+    description = serializers.CharField(required=False)
+    amount = serializers.IntegerField(required=False)
+    title = serializers.CharField(required=False)
+    issue_date = serializers.DateField(required=False)
+    due_date = serializers.DateField(required=False)
+    attachment = serializers.FileField(required=False)
+    reminder = serializers.IntegerField(required=False)
+    status = serializers.CharField(required=False)
+    type = serializers.CharField(required=False)
+    name_clinic = serializers.CharField(required=False)
+
+class ListClinicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Medical_Clinic
+        fields = ('name','color')
