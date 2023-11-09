@@ -5,7 +5,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 
 from ..models import  Medical_Clinic
-from ..serializers import  RegisterClinicSerializer
+from ..serializers import  RegisterClinicSerializer, ListClinicSerializer
 from ..middleware import teste_token
 
 
@@ -98,3 +98,24 @@ class RegisterClinicView(APIView):
         except:
           return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class ListClinicsView(APIView):
+    @extend_schema(
+        summary="List Clinics API",
+        description="List all clinics."
+                    "Token received in the Authorization header.",
+        responses=ListClinicSerializer,
+    )
+    def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    clinics = Medical_Clinic.objects.all()
+                    serializer = ListClinicSerializer(clinics, many=True)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
