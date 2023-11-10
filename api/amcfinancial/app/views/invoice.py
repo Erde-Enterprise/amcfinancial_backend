@@ -2,7 +2,7 @@ from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-
+from django.core.exceptions import ValidationError
 import base64
 
 
@@ -313,10 +313,12 @@ class ListInvoicesView(APIView):
             }
         }
     )
-    def get(self, request, start_date, end_date):
+    def get(self, request):
         try:
           validation = teste_token(request.headers)
           if validation['validity']:
+            start_date = self.request.query_params.get('start_date', None)
+            end_date = self.request.query_params.get('end_date', None)
             if start_date and end_date:
               invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
             else:
@@ -325,9 +327,9 @@ class ListInvoicesView(APIView):
             return Response(reponse_serializer.data, status=status.HTTP_200_OK)
           else:
             return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
-        except serializers.ValidationError as e:
-          errors = dict(e.detail)  
-          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            errors = {'error': str(e)}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
