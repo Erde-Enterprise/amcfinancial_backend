@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Invoice, Medical_Clinic
         
+# Requests
 class LoginSerializer(serializers.Serializer):
     email_or_nickname = serializers.CharField()
     password = serializers.CharField()
@@ -28,30 +29,12 @@ class RegisterInvoiceSerializer(serializers.Serializer):
     status = serializers.CharField()
     type = serializers.CharField()
     name_clinic = serializers.CharField()
-
-class MedicalClinicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Medical_Clinic
-        fields = ('name','color')
-
-class ListInvoicesSerializer(serializers.ModelSerializer):
-    clinic = MedicalClinicSerializer()
-    class Meta:
-        model = Invoice
-        exclude =('id','attachment','user')
-
+    
 class AttachmentSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
 
-class ListDateSerializer(serializers.Serializer):
-    start_date = serializers.DateField(required=False)
-    end_date = serializers.DateField(required=False)
-
 class CustomerSerializer(serializers.Serializer):
     nickname = serializers.CharField()
-
-class InvoiceSerializer(serializers.Serializer):
-    invoice_number = serializers.CharField()
 
 class UpdateInvoiceSerializer(serializers.Serializer):
     invoice_number_older = serializers.CharField()
@@ -66,6 +49,22 @@ class UpdateInvoiceSerializer(serializers.Serializer):
     status = serializers.CharField(required=False)
     type = serializers.CharField(required=False)
     name_clinic = serializers.CharField(required=False)
+
+class InvoiceSerializer(serializers.Serializer):
+    invoice_number = serializers.CharField()
+
+
+# Responses
+class MedicalClinicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Medical_Clinic
+        fields = ('name','color')
+
+class ListInvoicesSerializer(serializers.ModelSerializer):
+    clinic = MedicalClinicSerializer()
+    class Meta:
+        model = Invoice
+        exclude =('id','attachment','user')
 
 class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:

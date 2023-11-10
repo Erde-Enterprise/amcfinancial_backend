@@ -11,7 +11,7 @@ urlpatterns = [
     path('register/clinic/', RegisterClinicView.as_view(), name='register-clinic'),
     path('register/invoice/', RegisterInvoiceView.as_view(), name='register-invoice'),
     # LIST
-    path('list/invoices/', ListInvoicesView.as_view(), name='list-all-invoices'),
+    path('list/invoices/<str:start_date>/<str:end_date>/', ListInvoicesView.as_view(), name='list-all-invoices'),
     path('list/clinics/', ListClinicsView.as_view(), name='list-all-clinics'),
     # DELETE
     path('delete/customer/', DeleteCustomerView.as_view(), name='delete-customer'),
