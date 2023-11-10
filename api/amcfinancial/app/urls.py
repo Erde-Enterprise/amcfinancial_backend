@@ -10,18 +10,23 @@ urlpatterns = [
     path('register/customer/', RegisterCustomerView.as_view(), name='register-customer'), 
     path('register/clinic/', RegisterClinicView.as_view(), name='register-clinic'),
     path('register/invoice/', RegisterInvoiceView.as_view(), name='register-invoice'),
+
     # LIST
-    path('list/invoices/<str:start_date>/<str:end_date>/', ListInvoicesView.as_view(), name='list-all-invoices'),
+    path('list/invoices/', ListInvoicesView.as_view(), name='list-all-invoices'),
     path('list/clinics/', ListClinicsView.as_view(), name='list-all-clinics'),
+
     # DELETE
     path('delete/customer/', DeleteCustomerView.as_view(), name='delete-customer'),
     path('delete/invoice/', DeleteInvoiceView.as_view(), name='delete-invoice'),
+
     # UPDATE
     path('update/invoice/', UpdateInvoiceView.as_view(), name='update-invoice'),
+
     # OTHERS
     path('attachment/', AttachmentView.as_view(), name='attachment'),
     path('login/', LoginView.as_view(), name='login'),
     path('validate-token/',ValidateTokenView.as_view(), name='validate-token'),
+    
     # SWAGGER
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
