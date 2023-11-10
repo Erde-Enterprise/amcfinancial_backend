@@ -7,7 +7,7 @@ import base64
 
 
 from ..models import Medical_Clinic, Invoice
-from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, ListDateSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
+from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
 from ..middleware import teste_token
 from ..provides import user_profile_type
 
@@ -251,26 +251,26 @@ class DeleteInvoiceView(APIView):
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class ListInvoicesView(APIView):
     @extend_schema(
         summary="List Invoices API",
         description="Returns all invoices if no parameters are passed. If 'Size' is passed, its value will be the number of Invoices returned."
                     "Token received in the Authorization header.",
-        request=ListDateSerializer,
         parameters=[
             OpenApiParameter(
-              name="start_date",
-              description="Start Date.",
-              required=False,
-              type=OpenApiTypes.DATE,
-              location="form",  
+                name="start_date",
+                description="Start date.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="path",
             ),
             OpenApiParameter(
-              name="end_date",
-              description="End Date.",
-              required=False,
-              type=OpenApiTypes.DATE,
-              location="form",  
+                name="end_date",
+                description="End date.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="path",
             )
         ],
         responses={
@@ -313,14 +313,10 @@ class ListInvoicesView(APIView):
             }
         }
     )
-    def post(self, request):
+    def get(self, request, start_date, end_date):
         try:
           validation = teste_token(request.headers)
           if validation['validity']:
-            serializer = ListDateSerializer(data=request.data)  
-            serializer.is_valid(raise_exception=True)
-            start_date = serializer.validated_data.get('start_date')
-            end_date = serializer.validated_data.get('end_date')
             if start_date and end_date:
               invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
             else:
