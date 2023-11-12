@@ -140,7 +140,7 @@ class RegisterInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             validation = teste_token(request.headers)
             if validation['validity']:
-                if validation['type'] == 0 or validation['type'] == 1:
+                if validation['type'] == 0 or validation['type'] == 2:
                     attachment_bytes = request.FILES['attachment'].read() 
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name_clinic']).first()
@@ -235,7 +235,7 @@ class DeleteInvoiceView(APIView):
             serializer = InvoiceSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
-                if validation['type'] == 0 or validation['type'] == 1:
+                if validation['type'] == 0 or validation['type'] == 2:
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     if invoice:
                         invoice.delete()
@@ -545,7 +545,7 @@ class UpdateInvoiceView(APIView):
            invoice = Invoice.objects.get(invoice_number=invoice_number_older)
            validation = teste_token(request.headers)
            if validation['validity']:
-              if validation['type'] == 0  or validation['type'] == 1:
+              if validation['type'] == 0  or validation['type'] == 2:
                  name_clinic = data_copy.pop('name_clinic', None)
                  if name_clinic:
                     clinic = Medical_Clinic.objects.get(name=name_clinic)
