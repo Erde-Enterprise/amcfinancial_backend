@@ -235,7 +235,7 @@ class DeleteInvoiceView(APIView):
             serializer = InvoiceSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
-                if validation['type'] == 0 or validation['type'] == 2:
+                if validation['type'] == 0:
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     if invoice:
                         invoice.delete()
