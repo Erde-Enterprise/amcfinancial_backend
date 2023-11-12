@@ -321,6 +321,10 @@ class ListInvoicesView(APIView):
             end_date = self.request.query_params.get('end_date', None)
             if start_date and end_date:
               invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
+            elif start_date:
+              invoices = Invoice.objects.filter(issue_date__gte=start_date)
+            elif end_date:
+              invoices = Invoice.objects.filter(issue_date__lte=end_date)
             else:
               invoices = Invoice.objects.all()
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Invoice, Medical_Clinic
+from .models import Invoice, Medical_Clinic, Customer
         
 # Requests
 class LoginSerializer(serializers.Serializer):
@@ -70,3 +70,8 @@ class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medical_Clinic
         fields = ('name','color')
+
+class ListCustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ('nickname',)
