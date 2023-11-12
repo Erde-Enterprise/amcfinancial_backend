@@ -140,7 +140,7 @@ class RegisterInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             validation = teste_token(request.headers)
             if validation['validity']:
-                if validation['type'] == 0 or validation['type'] == 1:
+                if validation['type'] == 0 or validation['type'] == 2:
                     attachment_bytes = request.FILES['attachment'].read() 
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name_clinic']).first()
@@ -235,7 +235,7 @@ class DeleteInvoiceView(APIView):
             serializer = InvoiceSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
-                if validation['type'] == 0 or validation['type'] == 1:
+                if validation['type'] == 0:
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
                     if invoice:
                         invoice.delete()
@@ -321,6 +321,10 @@ class ListInvoicesView(APIView):
             end_date = self.request.query_params.get('end_date', None)
             if start_date and end_date:
               invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
+            elif start_date:
+              invoices = Invoice.objects.filter(issue_date__gte=start_date)
+            elif end_date:
+              invoices = Invoice.objects.filter(issue_date__lte=end_date)
             else:
               invoices = Invoice.objects.all()
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)
@@ -541,7 +545,7 @@ class UpdateInvoiceView(APIView):
            invoice = Invoice.objects.get(invoice_number=invoice_number_older)
            validation = teste_token(request.headers)
            if validation['validity']:
-              if validation['type'] == 0  or validation['type'] == 1:
+              if validation['type'] == 0  or validation['type'] == 2:
                  name_clinic = data_copy.pop('name_clinic', None)
                  if name_clinic:
                     clinic = Medical_Clinic.objects.get(name=name_clinic)
