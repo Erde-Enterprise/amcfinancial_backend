@@ -113,15 +113,13 @@ class LoginView(APIView):
 
           user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
           if user_root and check_password(password, user_root.password):
-              image_binary_data = user_root.photo
-              image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
               refresh = RefreshToken.for_user(user_root)
               refresh['type'] = 0
               return Response({'token': str(refresh),
                               'email': user_root.email_root,
                               'nickname': user_root.nickname,
                               'name': user_root.name,
-                              'photo': image_base64,
+                              'photo': user_root.photo,
                               'user_type': 0}, status=status.HTTP_200_OK)
           
           customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 

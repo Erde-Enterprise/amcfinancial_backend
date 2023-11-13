@@ -74,4 +74,4 @@ class ListClinicSerializer(serializers.ModelSerializer):
 class ListCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
-        fields = ('nickname',)
+        fields = ('name','nickname','email','photo','type')
