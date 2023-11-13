@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 import os
 
 from ..models import User_Root, Customer
-from ..serializers import RegisterCustomerSerializer, CustomerSerializer
+from ..serializers import RegisterCustomerSerializer, CustomerSerializer, ListCustomerSerializer
 from ..middleware import teste_token
 
 class RegisterCustomerView(APIView):
@@ -221,3 +221,19 @@ class DeleteCustomerView(APIView):
       return Response(errors, status=status.HTTP_400_BAD_REQUEST)
     except:
         return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ListCustomerView(APIView):
+   def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    customers = Customer.objects.all()
+                    serializer = ListCustomerSerializer(customers, many=True)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

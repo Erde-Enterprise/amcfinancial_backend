@@ -1,5 +1,5 @@
 from django.urls import path
-from .views.customer import RegisterCustomerView, DeleteCustomerView
+from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView
 from .views.others import ValidateTokenView, LoginView
 from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView
 from .views.clinic import RegisterClinicView, ListClinicsView
@@ -14,6 +14,7 @@ urlpatterns = [
     # LIST
     path('list/invoices/', ListInvoicesView.as_view(), name='list-all-invoices'),
     path('list/clinics/', ListClinicsView.as_view(), name='list-all-clinics'),
+    path('list/customers/', ListCustomerView.as_view(), name='list-all-customers'),
 
     # DELETE
     path('delete/customer/', DeleteCustomerView.as_view(), name='delete-customer'),
