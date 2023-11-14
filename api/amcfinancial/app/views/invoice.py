@@ -67,6 +67,12 @@ class RegisterInvoiceView(APIView):
                 type=OpenApiTypes.BINARY,
             ),
             OpenApiParameter(
+                name="reminder",
+                description="Invoice's reminder (Mahnung).",
+                required=False,
+                type=OpenApiTypes.INT,  
+            ),
+            OpenApiParameter(
                 name="status",
                 description="Invoice's status.",
                 required=True,
@@ -149,13 +155,13 @@ class RegisterInvoiceView(APIView):
                           user = user_profile_type(validation)
                           invoice = Invoice.objects.create(
                               invoice_number=serializer.validated_data['invoice_number'],
-                              description=serializer.validated_data['description'],
+                              description=serializer.validated_data.get('description', ''),
                               amount=serializer.validated_data['amount'],
                               title=serializer.validated_data['title'],
                               issue_date=serializer.validated_data['issue_date'],
                               due_date=serializer.validated_data['due_date'],
                               attachment=attachment_bytes,
-                              reminder= 0,
+                              reminder= serializer.validated_data.get('reminder', 0),
                               status=serializer.validated_data['status'],
                               type=serializer.validated_data['type'],
                               clinic=clinic,

@@ -26,6 +26,7 @@ class RegisterInvoiceSerializer(serializers.Serializer):
     issue_date = serializers.DateField()
     due_date = serializers.DateField()
     attachment = serializers.FileField()
+    reminder = serializers.IntegerField(required=False)
     status = serializers.CharField()
     type = serializers.CharField()
     name_clinic = serializers.CharField()
