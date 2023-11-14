@@ -223,6 +223,47 @@ class DeleteCustomerView(APIView):
         return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ListCustomerView(APIView):
+   @extend_schema(
+       summary="List Customers API",
+       description="List all customers."
+                    "Token received in the Authorization header.",
+       responses={
+           200: {
+               "description": "Successful request - Returns a list of customers.",
+               "example": {
+                   "response": [
+                       {
+                           "name": "John Doe",
+                           "nickname": "johndoe",
+                           "email": "gFqHn@example.com",
+                           "photo": "/9vjodsadl=fawfdsdegk45ks",
+                           "type": 1
+                       }
+                   ]
+               }
+           },
+           401: {
+               "description": "Unauthorized. Invalid access token.",
+               "example": {
+                   "error": "Invalid token or Activation Expired"
+               }
+           },
+           403: {
+               "description": "Forbidden. Invalid user type.",
+               "example": {
+                   "error": "Invalid User Type"
+               }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+       }
+       
+       
+   )
    def get(self, request):
         try:
             validation = teste_token(request.headers)
