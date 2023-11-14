@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 import base64
 
 from ..models import User_Root, Customer
-from ..serializers import LoginSerializer
+from ..serializers import LoginSerializer, LoginCustomerResponseSerializer, LoginUserRootResponseSerializer
 from ..middleware import teste_token
 
 
@@ -113,27 +113,13 @@ class LoginView(APIView):
 
           user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
           if user_root and check_password(password, user_root.password):
-              refresh = RefreshToken.for_user(user_root)
-              refresh['type'] = 0
-              return Response({'token': str(refresh),
-                              'email': user_root.email_root,
-                              'nickname': user_root.nickname,
-                              'name': user_root.name,
-                              'photo': user_root.photo,
-                              'user_type': 0}, status=status.HTTP_200_OK)
+              response = LoginUserRootResponseSerializer(user_root)
+              return Response(response.data, status=status.HTTP_200_OK)
           
           customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
           if customer and check_password(password, customer.password):
-              image_binary_data = customer.photo
-              image_base64 = base64.b64encode(image_binary_data).decode('utf-8') 
-              refresh = RefreshToken.for_user(customer)
-              refresh['type'] =customer.type
-              return Response({'token': str(refresh),
-                              'email': customer.email,
-                              'nickname': customer.nickname,
-                              'name': customer.name,
-                              'photo': image_base64,
-                              'user_type': customer.type}, status=status.HTTP_200_OK)
+              response = LoginCustomerResponseSerializer(customer)
+              return Response(response.data, status=status.HTTP_200_OK)
           
           return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
         except serializers.ValidationError as e:

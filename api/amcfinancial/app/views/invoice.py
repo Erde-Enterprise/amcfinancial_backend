@@ -153,6 +153,9 @@ class RegisterInvoiceView(APIView):
                     if clinic:
                       if not invoice:
                           user = user_profile_type(validation)
+                          reminder = serializer.validated_data.get('reminder', 0)
+                          if reminder > 3:
+                              reminder = 3
                           invoice = Invoice.objects.create(
                               invoice_number=serializer.validated_data['invoice_number'],
                               description=serializer.validated_data.get('description', ''),
@@ -161,11 +164,11 @@ class RegisterInvoiceView(APIView):
                               issue_date=serializer.validated_data['issue_date'],
                               due_date=serializer.validated_data['due_date'],
                               attachment=attachment_bytes,
-                              reminder= serializer.validated_data.get('reminder', 0),
+                              reminder=reminder,
                               status=serializer.validated_data['status'],
                               type=serializer.validated_data['type'],
                               clinic=clinic,
-                              user= user
+                              user=user
                           )
                           invoice.save()
                           return Response({'response': 'Invoice created'}, status=status.HTTP_201_CREATED)

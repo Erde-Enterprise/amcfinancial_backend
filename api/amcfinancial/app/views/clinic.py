@@ -5,7 +5,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 
 from ..models import  Medical_Clinic
-from ..serializers import  RegisterClinicSerializer, ListClinicSerializer
+from ..serializers import  RegisterClinicSerializer, ListClinicSerializer, ClinicSerializer
 from ..middleware import teste_token
 
 
@@ -109,13 +109,38 @@ class ListClinicsView(APIView):
         try:
             validation = teste_token(request.headers)
             if validation['validity']:
-                if validation['type'] == 0:
-                    clinics = Medical_Clinic.objects.all()
+                if validation['type'] == 0 or validation['type'] == 2:
+                    clinics = Medical_Clinic.objects.filter(searchable=True)
                     serializer = ListClinicSerializer(clinics, many=True)
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 else:
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DeleteClinicView(APIView):
+    def delete(self, request):
+        try:
+            serializer = ClinicSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name']).first()
+                    if clinic:
+                        clinic.searchable = False
+                        clinic.save()
+                        return Response({'response': 'Clinic deleted'}, status=status.HTTP_200_OK)
+                    else:
+                        return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
