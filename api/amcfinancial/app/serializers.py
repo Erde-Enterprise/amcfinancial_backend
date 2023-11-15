@@ -70,7 +70,7 @@ class ListInvoicesSerializer(serializers.ModelSerializer):
     clinic = MedicalClinicSerializer()
     class Meta:
         model = Invoice
-        exclude =('id','attachment','user')
+        exclude =('id','attachment','user', 'searchable')
 
 class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:
