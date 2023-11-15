@@ -116,8 +116,9 @@ class RegisterCustomerView(APIView):
                           photo_bytes = request.FILES['photo'].read()
                       else:
                           current_directory = os.path.dirname(os.path.abspath(__file__))
-                          avatar_path = os.path.join(current_directory, 'static/images/avatar.png')
-                          with open(avatar_path, 'rb') as f:
+                          avatar_path = os.path.join('..','static', 'images', 'avatar.png')
+                          avatar_full_path = os.path.join(current_directory, avatar_path)
+                          with open(avatar_full_path, 'rb') as f:
                               photo_bytes = f.read()
                       password_crypt = make_password(serializer.validated_data['password'])
                     
