@@ -11,6 +11,7 @@ class User_Root(models.Model):
     password = models.CharField(max_length=255)
     photo = models.BinaryField(null=True, blank=True)
     searchable = models.BooleanField(default=True)
+    
 class Customer(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)

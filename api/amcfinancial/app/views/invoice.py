@@ -245,8 +245,8 @@ class DeleteInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
                 if validation['type'] == 0:
-                    invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
-                    if invoice and invoice.searchable:
+                    invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
+                    if invoice.searchable:
                         invoice.searchable = False
                         invoice.save()
                         return Response({'response': 'Invoice deleted'}, status=status.HTTP_200_OK)
@@ -256,6 +256,8 @@ class DeleteInvoiceView(APIView):
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
         except serializers.ValidationError as e:
           errors = dict(e.detail)
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)

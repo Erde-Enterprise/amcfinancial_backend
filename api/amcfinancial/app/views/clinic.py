@@ -103,7 +103,37 @@ class ListClinicsView(APIView):
         summary="List Clinics API",
         description="List all clinics."
                     "Token received in the Authorization header.",
-        responses=ListClinicSerializer,
+        responses={
+            200: {
+                "description": "Successful request - Returns a success message.",
+                "example": {
+                    "response": [
+                        {
+                            "name": "Clinic 1",
+                            "color": "#000000"
+                        }
+                    ]
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
     )
     def get(self, request):
         try:
@@ -121,6 +151,58 @@ class ListClinicsView(APIView):
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class DeleteClinicView(APIView):
+    @extend_schema(
+        summary="Delete Clinic API",
+        description="Delete Clinic. Token received in the Authorization header.",
+        request=ClinicSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                description="Clinic's name.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            )
+        ],
+        responses={
+            200: {
+                "description": "Delete Clinic - Returns a success message.",
+                "example": {
+                    "response": "Clinic deleted"
+                }
+            },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            404: {
+                "description": "Not Found. Clinic not found.",
+                "example": {
+                    "error": "Clinic not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
     def delete(self, request):
         try:
             serializer = ClinicSerializer(data=request.data)
@@ -128,9 +210,10 @@ class DeleteClinicView(APIView):
             validation = teste_token(request.headers)
             if validation['validity']:
                 if validation['type'] == 0:
-                    clinic = Medical_Clinic.objects.filter(name=serializer.validated_data['name']).first()
-                    if clinic:
+                    clinic = Medical_Clinic.objects.get(name=serializer.validated_data['name'])
+                    if clinic.searchable:
                         clinic.searchable = False
+                        clinic.name = f'{clinic.name}-D{clinic.id}'
                         clinic.save()
                         return Response({'response': 'Clinic deleted'}, status=status.HTTP_200_OK)
                     else:
@@ -139,6 +222,8 @@ class DeleteClinicView(APIView):
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Medical_Clinic.DoesNotExist:
+            return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
         except serializers.ValidationError as e:
           errors = dict(e.detail)  
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
