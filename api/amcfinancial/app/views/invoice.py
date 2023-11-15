@@ -246,8 +246,9 @@ class DeleteInvoiceView(APIView):
             if validation['validity']:
                 if validation['type'] == 0:
                     invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
-                    if invoice:
-                        invoice.delete()
+                    if invoice and invoice.searchable:
+                        invoice.searchable = False
+                        invoice.save()
                         return Response({'response': 'Invoice deleted'}, status=status.HTTP_200_OK)
                     else:
                         return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -329,13 +330,13 @@ class ListInvoicesView(APIView):
             start_date = self.request.query_params.get('start_date', None)
             end_date = self.request.query_params.get('end_date', None)
             if start_date and end_date:
-              invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
+              invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date], searchable=True)
             elif start_date:
-              invoices = Invoice.objects.filter(issue_date__gte=start_date)
+              invoices = Invoice.objects.filter(issue_date__gte=start_date, searchable=True)
             elif end_date:
-              invoices = Invoice.objects.filter(issue_date__lte=end_date)
+              invoices = Invoice.objects.filter(issue_date__lte=end_date, searchable=True)
             else:
-              invoices = Invoice.objects.all()
+              invoices = Invoice.objects.filter(searchable=True)
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)
             return Response(reponse_serializer.data, status=status.HTTP_200_OK)
           else:
@@ -402,9 +403,12 @@ class AttachmentView(APIView):
           serializer.is_valid(raise_exception=True)
           if validation['validity']:
               invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
-              attachment_data = invoice.attachment
-              attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
-              return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+              if invoice.searchable:
+                attachment_data = invoice.attachment
+                attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
+                return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+              else:
+                return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
           else:
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except Invoice.DoesNotExist:
