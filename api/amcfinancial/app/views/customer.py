@@ -102,7 +102,7 @@ class RegisterCustomerView(APIView):
         }
     )
     def post(self, request):
-        # try:
+        try:
             serializer = RegisterCustomerSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             validation = teste_token(request.headers)
@@ -139,13 +139,13 @@ class RegisterCustomerView(APIView):
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
-        # except serializers.ValidationError as e:
-        #   errors = dict(e.detail)  
-        #   return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-        # except IntegrityError:
-        #     return Response({'error': 'Integrity Error'}, status=status.HTTP_400_BAD_REQUEST)
-        # except:
-        #     return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except serializers.ValidationError as e:
+          errors = dict(e.detail)  
+          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response({'error': 'Integrity Error'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class DeleteCustomerView(APIView):
    @extend_schema(
