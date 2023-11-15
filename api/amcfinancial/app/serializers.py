@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Invoice, Medical_Clinic, Customer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import Invoice, Medical_Clinic, Customer, User_Root
         
 # Requests
 class LoginSerializer(serializers.Serializer):
@@ -37,6 +39,12 @@ class AttachmentSerializer(serializers.Serializer):
 class CustomerSerializer(serializers.Serializer):
     nickname = serializers.CharField()
 
+class InvoiceSerializer(serializers.Serializer):
+    invoice_number = serializers.CharField()
+
+class ClinicSerializer(serializers.Serializer):
+    name = serializers.CharField()
+
 class UpdateInvoiceSerializer(serializers.Serializer):
     invoice_number_older = serializers.CharField()
     invoice_number = serializers.CharField(required=False)
@@ -51,9 +59,6 @@ class UpdateInvoiceSerializer(serializers.Serializer):
     type = serializers.CharField(required=False)
     name_clinic = serializers.CharField(required=False)
 
-class InvoiceSerializer(serializers.Serializer):
-    invoice_number = serializers.CharField()
-
 
 # Responses
 class MedicalClinicSerializer(serializers.ModelSerializer):
@@ -65,7 +70,7 @@ class ListInvoicesSerializer(serializers.ModelSerializer):
     clinic = MedicalClinicSerializer()
     class Meta:
         model = Invoice
-        exclude =('id','attachment','user')
+        exclude =('id','attachment','user', 'searchable')
 
 class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:
@@ -76,3 +81,26 @@ class ListCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ('name','nickname','email','photo','type')
+
+class LoginCustomerResponseSerializer(serializers.ModelSerializer):
+    token = serializers.SerializerMethodField()
+    class Meta:
+        model = Customer
+        fields = ('token','name','nickname','email','photo','type')
+    
+    def get_token(self, obj):
+        refresh = RefreshToken.for_user(obj)
+        refresh['type'] = obj.type
+        return str(refresh)
+
+class LoginUserRootResponseSerializer(serializers.ModelSerializer):
+    type = serializers.IntegerField(default=0)
+    token = serializers.SerializerMethodField()
+    class Meta:
+        model = User_Root
+        fields = ('token','name','nickname','email_root','photo', 'type')
+
+    def get_token(self, obj):
+        refresh = RefreshToken.for_user(obj)
+        refresh['type'] = 0
+        return str(refresh)

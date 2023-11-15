@@ -153,6 +153,9 @@ class RegisterInvoiceView(APIView):
                     if clinic:
                       if not invoice:
                           user = user_profile_type(validation)
+                          reminder = serializer.validated_data.get('reminder', 0)
+                          if reminder > 3:
+                              reminder = 3
                           invoice = Invoice.objects.create(
                               invoice_number=serializer.validated_data['invoice_number'],
                               description=serializer.validated_data.get('description', ''),
@@ -161,11 +164,11 @@ class RegisterInvoiceView(APIView):
                               issue_date=serializer.validated_data['issue_date'],
                               due_date=serializer.validated_data['due_date'],
                               attachment=attachment_bytes,
-                              reminder= serializer.validated_data.get('reminder', 0),
+                              reminder=reminder,
                               status=serializer.validated_data['status'],
                               type=serializer.validated_data['type'],
                               clinic=clinic,
-                              user= user
+                              user=user
                           )
                           invoice.save()
                           return Response({'response': 'Invoice created'}, status=status.HTTP_201_CREATED)
@@ -242,9 +245,10 @@ class DeleteInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
                 if validation['type'] == 0:
-                    invoice = Invoice.objects.filter(invoice_number=serializer.validated_data['invoice_number']).first()
-                    if invoice:
-                        invoice.delete()
+                    invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
+                    if invoice.searchable:
+                        invoice.searchable = False
+                        invoice.save()
                         return Response({'response': 'Invoice deleted'}, status=status.HTTP_200_OK)
                     else:
                         return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -252,6 +256,8 @@ class DeleteInvoiceView(APIView):
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
         except serializers.ValidationError as e:
           errors = dict(e.detail)
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
@@ -326,13 +332,13 @@ class ListInvoicesView(APIView):
             start_date = self.request.query_params.get('start_date', None)
             end_date = self.request.query_params.get('end_date', None)
             if start_date and end_date:
-              invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date])
+              invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date], searchable=True)
             elif start_date:
-              invoices = Invoice.objects.filter(issue_date__gte=start_date)
+              invoices = Invoice.objects.filter(issue_date__gte=start_date, searchable=True)
             elif end_date:
-              invoices = Invoice.objects.filter(issue_date__lte=end_date)
+              invoices = Invoice.objects.filter(issue_date__lte=end_date, searchable=True)
             else:
-              invoices = Invoice.objects.all()
+              invoices = Invoice.objects.filter(searchable=True)
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)
             return Response(reponse_serializer.data, status=status.HTTP_200_OK)
           else:
@@ -399,9 +405,12 @@ class AttachmentView(APIView):
           serializer.is_valid(raise_exception=True)
           if validation['validity']:
               invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
-              attachment_data = invoice.attachment
-              attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
-              return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+              if invoice.searchable:
+                attachment_data = invoice.attachment
+                attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
+                return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+              else:
+                return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
           else:
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except Invoice.DoesNotExist:

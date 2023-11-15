@@ -208,8 +208,12 @@ class DeleteCustomerView(APIView):
       if validation['validity']:
             if validation['type'] == 0:
                 customer = Customer.objects.get(nickname=serializer.validated_data['nickname'])
-                customer.delete()
-                return Response({"message": "Customer deleted successfully"}, status=status.HTTP_200_OK)
+                if customer.searchable:
+                    customer.searchable = False
+                    customer.save()
+                    return Response({"message": "Customer deleted successfully"}, status=status.HTTP_200_OK)
+                else: 
+                    return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
             else:
                return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
       else:
@@ -269,7 +273,7 @@ class ListCustomerView(APIView):
             validation = teste_token(request.headers)
             if validation['validity']:
                 if validation['type'] == 0:
-                    customers = Customer.objects.all()
+                    customers = Customer.objects.filter(searchable=True)
                     serializer = ListCustomerSerializer(customers, many=True)
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 else:

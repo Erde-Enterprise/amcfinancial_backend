@@ -1,5 +1,6 @@
 from .models import User_Root, Customer, UserProfile
 from django.contrib.contenttypes.models import ContentType
+
 def user_profile_type(validation):
     if validation['type'] == 0:
         user_profiles = UserProfile.objects.filter(content_type=ContentType.objects.get_for_model(User_Root), object_id=validation['id']).first()

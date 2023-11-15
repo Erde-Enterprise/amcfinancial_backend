@@ -10,6 +10,8 @@ class User_Root(models.Model):
     email_root = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     photo = models.BinaryField(null=True, blank=True)
+    searchable = models.BooleanField(default=True)
+    
 class Customer(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -18,10 +20,11 @@ class Customer(models.Model):
     password = models.CharField(max_length=255)
     photo = models.BinaryField(null=True, blank=True)
     type = models.IntegerField()
+    searchable = models.BooleanField(default=True)
     root = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
 
 class UserProfile(models.Model):
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
     object_id = models.PositiveIntegerField()
     user = GenericForeignKey('content_type', 'object_id')
 
@@ -29,6 +32,7 @@ class Medical_Clinic(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
     color = models.CharField(max_length=255)
+    searchable = models.BooleanField(default=True)
 
 class Invoice(models.Model):
     id = models.AutoField(primary_key=True)
@@ -42,13 +46,15 @@ class Invoice(models.Model):
     reminder = models.IntegerField()
     status = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
+    searchable = models.BooleanField(default=True)
     clinic = models.ForeignKey(Medical_Clinic, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
 
 
 class Access_History(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
     login_date = models.DateTimeField()
     location = models.CharField(max_length=255)
+    searchable = models.BooleanField(default=True)
+    user = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
 
