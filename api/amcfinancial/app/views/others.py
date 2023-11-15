@@ -112,12 +112,12 @@ class LoginView(APIView):
           password = serializer.validated_data['password']
 
           user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
-          if user_root and check_password(password, user_root.password):
+          if user_root and check_password(password, user_root.password) and user_root.searchable:
               response = LoginUserRootResponseSerializer(user_root)
               return Response(response.data, status=status.HTTP_200_OK)
           
           customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
-          if customer and check_password(password, customer.password):
+          if customer and check_password(password, customer.password) and customer.searchable:
               response = LoginCustomerResponseSerializer(customer)
               return Response(response.data, status=status.HTTP_200_OK)
           
