@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 import base64
 
 
@@ -331,14 +332,20 @@ class ListInvoicesView(APIView):
           if validation['validity']:
             start_date = self.request.query_params.get('start_date', None)
             end_date = self.request.query_params.get('end_date', None)
+            order_by_fields = ['-reminder', 'issue_date']
+            date_filters = Q()
             if start_date and end_date:
-              invoices = Invoice.objects.filter(issue_date__range=[start_date, end_date], searchable=True)
+              date_filters &= Q(issue_date__range=[start_date, end_date])
             elif start_date:
-              invoices = Invoice.objects.filter(issue_date__gte=start_date, searchable=True)
+              date_filters &= Q(issue_date__gte=start_date)
             elif end_date:
-              invoices = Invoice.objects.filter(issue_date__lte=end_date, searchable=True)
+              date_filters &= Q(issue_date__lte=end_date)
             else:
-              invoices = Invoice.objects.filter(searchable=True)
+              invoices = Invoice.objects.filter(searchable=True).order_by(*order_by_fields)
+              reponse_serializer = ListInvoicesSerializer(invoices, many=True)
+              return Response(reponse_serializer.data, status=status.HTTP_200_OK)
+            
+            invoices = Invoice.objects.filter(date_filters | Q(reminder=3), searchable=True).order_by(*order_by_fields)
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)
             return Response(reponse_serializer.data, status=status.HTTP_200_OK)
           else:
