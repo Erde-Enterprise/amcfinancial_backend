@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ValidationError
 
 from .models import Invoice, Medical_Clinic, Customer, User_Root
         
@@ -46,8 +47,8 @@ class ClinicSerializer(serializers.Serializer):
     name = serializers.CharField()
 
 class UpdateInvoiceSerializer(serializers.Serializer):
-    invoice_number_older = serializers.CharField()
-    invoice_number = serializers.CharField(required=False)
+    invoice_number = serializers.CharField()
+    new_invoice_number = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
     amount = serializers.IntegerField(required=False)
     title = serializers.CharField(required=False)
@@ -58,6 +59,31 @@ class UpdateInvoiceSerializer(serializers.Serializer):
     status = serializers.CharField(required=False)
     type = serializers.CharField(required=False)
     name_clinic = serializers.CharField(required=False)
+
+    def update(self, instance, validated_data):
+        try:
+            if 'attachment' in validated_data:
+                attachment_file = validated_data['attachment'].read()
+                instance.attachment = attachment_file
+
+            if 'name_clinic' in validated_data:
+                name_clinic = validated_data['name_clinic']
+                clinic = Medical_Clinic.objects.get(name=name_clinic)
+                instance.clinic = clinic
+            
+            instance.invoice_number = validated_data.get('new_invoice_number', instance.invoice_number)
+            instance.description = validated_data.get('description', instance.description)
+            instance.amount = validated_data.get('amount', instance.amount)
+            instance.title = validated_data.get('title', instance.title)
+            instance.issue_date = validated_data.get('issue_date', instance.issue_date)
+            instance.due_date = validated_data.get('due_date', instance.due_date)
+            instance.reminder = validated_data.get('reminder', instance.reminder)
+            instance.status = validated_data.get('status', instance.status)
+            instance.type = validated_data.get('type', instance.type)
+            instance.save()
+            return instance
+        except Medical_Clinic.DoesNotExist:
+            raise ValidationError('Clinic not found')
 
 
 # Responses

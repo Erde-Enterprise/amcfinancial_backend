@@ -2,8 +2,9 @@ from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from django.db.models import Q
+from django.db import IntegrityError
 import base64
 
 
@@ -562,24 +563,12 @@ class UpdateInvoiceView(APIView):
     )
     def patch(self, request):
         try:
-           data_copy = request.data.copy()
-           invoice_number_older = data_copy.pop('invoice_number_older', None)
-           invoice = Invoice.objects.get(invoice_number=invoice_number_older)
+           invoice_number = request.data['invoice_number']
+           invoice = Invoice.objects.get(invoice_number=invoice_number)
            validation = teste_token(request.headers)
            if validation['validity']:
-              if validation['type'] == 0  or validation['type'] == 2:
-                 name_clinic = data_copy.pop('name_clinic', None)
-                 if name_clinic:
-                    clinic = Medical_Clinic.objects.get(name=name_clinic)
-                    if clinic:
-                       invoice.clinic = clinic
-                    else:
-                       return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
-                 attachment = data_copy.pop('attachment', None)
-                 if attachment:
-                    attachment_bytes = request.FILES['attachment'].read() 
-                    invoice.attachment = attachment_bytes
-                 serializer = UpdateInvoiceSerializer(invoice, data=data_copy, partial=True)
+              if validation['type'] == 0  or validation['type'] == 2: 
+                 serializer = UpdateInvoiceSerializer(invoice, data=request.data, partial=True)
                  serializer.is_valid(raise_exception=True)
                  serializer.save()
                  return Response({'response': 'Invoice updated'}, status=status.HTTP_200_OK)
@@ -589,9 +578,11 @@ class UpdateInvoiceView(APIView):
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except Invoice.DoesNotExist:
             return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
-        except serializers.ValidationError as e:
-          errors = dict(e.detail)  
-          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            error_message = e.detail[0] if isinstance(e.detail, list) else e.detail
+            errors = {'error': error_message}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response({'error': 'Number Invoice already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
