@@ -192,14 +192,15 @@ class DeleteInvoiceView(APIView):
     @extend_schema(
         summary="Delete Invoice API",
         description="Delete Invoice. Token received in the Authorization header.",
+        request=InvoiceSerializer,
         parameters=[
             OpenApiParameter(
-                name="invoice_number",
-                description="Invoice's number.",
+                name="invoice_numbers",
+                description=" List of Invoice's number.",
                 required=True,
-                type=OpenApiTypes.STR,
+                type=InvoiceSerializer,
                 location="form",
-            )
+                ),
         ],
         responses={
             200: {
@@ -247,10 +248,11 @@ class DeleteInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
                 if validation['type'] == 0:
-                    invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
-                    if invoice.searchable:
-                        invoice.searchable = False
-                        invoice.save()
+                    invoices = Invoice.objects.filter(invoice_number__in=serializer.validated_data['invoice_numbers'], searchable=True)
+                    if invoices.exists():
+                        for invoice in invoices:
+                            invoice.searchable = False
+                            invoice.save()
                         return Response({'response': 'Invoice deleted'}, status=status.HTTP_200_OK)
                     else:
                         return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -269,7 +271,7 @@ class DeleteInvoiceView(APIView):
 class ListInvoicesView(APIView):
     @extend_schema(
         summary="List Invoices API",
-        description="Returns all invoices if no parameters are passed. If 'Size' is passed, its value will be the number of Invoices returned."
+        description="Returns all invoices if no parameters are passed."
                     "Token received in the Authorization header.",
         parameters=[
             OpenApiParameter(
@@ -437,14 +439,14 @@ class UpdateInvoiceView(APIView):
         request=UpdateInvoiceSerializer,
         parameters=[
             OpenApiParameter(
-                name="invoice_number_older",
+                name="invoice_number",
                 description="Invoice's number older.",
                 required=True,
                 type=OpenApiTypes.STR,
                 location="form",
             ),
             OpenApiParameter(
-                name="invoice_number",
+                name="new_invoice_number",
                 description="Invoice's number.",
                 required=False,
                 type=OpenApiTypes.STR,

@@ -41,7 +41,7 @@ class CustomerSerializer(serializers.Serializer):
     nickname = serializers.CharField()
 
 class InvoiceSerializer(serializers.Serializer):
-    invoice_number = serializers.CharField()
+    invoice_numbers = serializers.ListField(child=serializers.CharField())
 
 class ClinicSerializer(serializers.Serializer):
     name = serializers.CharField()
