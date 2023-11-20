@@ -2,8 +2,9 @@ from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from django.db.models import Q
+from django.db import IntegrityError
 import base64
 
 
@@ -191,14 +192,15 @@ class DeleteInvoiceView(APIView):
     @extend_schema(
         summary="Delete Invoice API",
         description="Delete Invoice. Token received in the Authorization header.",
+        request=InvoiceSerializer,
         parameters=[
             OpenApiParameter(
-                name="invoice_number",
-                description="Invoice's number.",
+                name="invoice_numbers",
+                description=" List of Invoice's number.",
                 required=True,
-                type=OpenApiTypes.STR,
+                type=InvoiceSerializer,
                 location="form",
-            )
+                ),
         ],
         responses={
             200: {
@@ -246,10 +248,11 @@ class DeleteInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
                 if validation['type'] == 0:
-                    invoice = Invoice.objects.get(invoice_number=serializer.validated_data['invoice_number'])
-                    if invoice.searchable:
-                        invoice.searchable = False
-                        invoice.save()
+                    invoices = Invoice.objects.filter(invoice_number__in=serializer.validated_data['invoices_number'], searchable=True)
+                    if invoices.exists():
+                        for invoice in invoices:
+                            invoice.searchable = False
+                            invoice.save()
                         return Response({'response': 'Invoice deleted'}, status=status.HTTP_200_OK)
                     else:
                         return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -264,11 +267,91 @@ class DeleteInvoiceView(APIView):
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FindInvoiceView(APIView):
+   @extend_schema(
+       summary="Find Invoice API",
+       description="Find Invoice. Token received in the Authorization header.",
+       parameters=[
+           OpenApiParameter(
+               name="invoice_number",
+               description="Invoice's number.",
+               required=True,
+               type=str,
+               location="path",
+           )
+       ],
+       responses={
+           200: {
+               "description": "Successful search - Returns the Invoice.",
+               "example": {
+                    "clinic": {
+                      "name": "Clinic Name",
+                      "color": "Color"
+                    },
+                    "invoice_number": "Invoice Number",
+                    "description": "Description of the invoice",
+                    "amount": "100",
+                    "title": "Title",
+                    "issue_date": "2023-05-01",
+                    "due_date": "2023-05-01",
+                    "reminder": 0,
+                    "status": "Pending",
+                    "type": "Invoice",
+
+                }
+           },
+           401: {
+               "description": "Unauthorized. Invalid access token.",
+               "example": {
+                   "error": "Invalid token or Activation Expired"
+               }
+           },
+           403: {
+               "description": "Forbidden. Invalid user type.",
+               "example": {
+                   "error": "Invalid User Type"
+               }
+           },
+           404: {
+               "description": "Not Found. Invoice not found.",
+               "example": {
+                   "error": "Invoice not found"
+               }
+           },
+           500: {
+               "description": "Internal Server Error.",
+               "example": {
+                   "error": "Internal Server Error"
+               }
+           }
+       }
+   )
+   def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0 or validation['type'] == 2:
+                    number_invoice = self.request.query_params.get('invoice_number', None)
+                    invoice = Invoice.objects.get(invoice_number=number_invoice, searchable=True)
+                    if invoice:
+                        serializer = ListInvoicesSerializer(invoice)
+                        return Response(serializer.data, status=status.HTTP_200_OK)
+                    else:
+                        return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class ListInvoicesView(APIView):
     @extend_schema(
         summary="List Invoices API",
-        description="Returns all invoices if no parameters are passed. If 'Size' is passed, its value will be the number of Invoices returned."
+        description="Returns all invoices if no parameters are passed."
                     "Token received in the Authorization header.",
         parameters=[
             OpenApiParameter(
@@ -436,14 +519,14 @@ class UpdateInvoiceView(APIView):
         request=UpdateInvoiceSerializer,
         parameters=[
             OpenApiParameter(
-                name="invoice_number_older",
+                name="invoice_number",
                 description="Invoice's number older.",
                 required=True,
                 type=OpenApiTypes.STR,
                 location="form",
             ),
             OpenApiParameter(
-                name="invoice_number",
+                name="new_invoice_number",
                 description="Invoice's number.",
                 required=False,
                 type=OpenApiTypes.STR,
@@ -562,24 +645,12 @@ class UpdateInvoiceView(APIView):
     )
     def patch(self, request):
         try:
-           data_copy = request.data.copy()
-           invoice_number_older = data_copy.pop('invoice_number_older', None)
-           invoice = Invoice.objects.get(invoice_number=invoice_number_older)
+           invoice_number = request.data['invoice_number']
+           invoice = Invoice.objects.get(invoice_number=invoice_number)
            validation = teste_token(request.headers)
            if validation['validity']:
-              if validation['type'] == 0  or validation['type'] == 2:
-                 name_clinic = data_copy.pop('name_clinic', None)
-                 if name_clinic:
-                    clinic = Medical_Clinic.objects.get(name=name_clinic)
-                    if clinic:
-                       invoice.clinic = clinic
-                    else:
-                       return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
-                 attachment = data_copy.pop('attachment', None)
-                 if attachment:
-                    attachment_bytes = request.FILES['attachment'].read() 
-                    invoice.attachment = attachment_bytes
-                 serializer = UpdateInvoiceSerializer(invoice, data=data_copy, partial=True)
+              if validation['type'] == 0  or validation['type'] == 2: 
+                 serializer = UpdateInvoiceSerializer(invoice, data=request.data, partial=True)
                  serializer.is_valid(raise_exception=True)
                  serializer.save()
                  return Response({'response': 'Invoice updated'}, status=status.HTTP_200_OK)
@@ -589,9 +660,11 @@ class UpdateInvoiceView(APIView):
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except Invoice.DoesNotExist:
             return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
-        except serializers.ValidationError as e:
-          errors = dict(e.detail)  
-          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            error_message = e.detail[0] if isinstance(e.detail, list) else e.detail
+            errors = {'error': error_message}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response({'error': 'Number Invoice already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
