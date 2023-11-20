@@ -134,7 +134,10 @@ class RegisterCustomerView(APIView):
                       customer.save()
                       return Response({'response': 'User created'}, status=status.HTTP_201_CREATED)
                     else:
-                        return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
+                        if customer.searchable:
+                            return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
+                        else:
+                         return Response({'error': 'Nickname or Email Invalid'}, status=status.HTTP_409_CONFLICT)
                 else:
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:

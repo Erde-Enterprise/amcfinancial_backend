@@ -175,7 +175,10 @@ class RegisterInvoiceView(APIView):
                           invoice.save()
                           return Response({'response': 'Invoice created'}, status=status.HTTP_201_CREATED)
                       else:
-                          return Response({'error': 'Invoice already exists'}, status=status.HTTP_409_CONFLICT)
+                          if invoice.searchable:
+                            return Response({'error': 'Invoice already exists'}, status=status.HTTP_409_CONFLICT)
+                          else:
+                            return Response({'error': 'Number Invoice Invalid'}, status=status.HTTP_409_CONFLICT)
                     else:
                         return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
                 else:
@@ -195,7 +198,7 @@ class DeleteInvoiceView(APIView):
         request=InvoiceSerializer,
         parameters=[
             OpenApiParameter(
-                name="invoice_numbers",
+                name="invoices_number",
                 description=" List of Invoice's number.",
                 required=True,
                 type=InvoiceSerializer,
