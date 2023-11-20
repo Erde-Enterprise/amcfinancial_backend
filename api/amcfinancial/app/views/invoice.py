@@ -248,7 +248,7 @@ class DeleteInvoiceView(APIView):
             serializer.is_valid(raise_exception=True)
             if validation['validity']:
                 if validation['type'] == 0:
-                    invoices = Invoice.objects.filter(invoice_number__in=serializer.validated_data['invoice_numbers'], searchable=True)
+                    invoices = Invoice.objects.filter(invoice_number__in=serializer.validated_data['invoices_number'], searchable=True)
                     if invoices.exists():
                         for invoice in invoices:
                             invoice.searchable = False
@@ -265,6 +265,86 @@ class DeleteInvoiceView(APIView):
         except serializers.ValidationError as e:
           errors = dict(e.detail)
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FindInvoiceView(APIView):
+   @extend_schema(
+       summary="Find Invoice API",
+       description="Find Invoice. Token received in the Authorization header.",
+       parameters=[
+           OpenApiParameter(
+               name="invoice_number",
+               description="Invoice's number.",
+               required=True,
+               type=str,
+               location="path",
+           )
+       ],
+       responses={
+           200: {
+               "description": "Successful search - Returns the Invoice.",
+               "example": {
+                    "clinic": {
+                      "name": "Clinic Name",
+                      "color": "Color"
+                    },
+                    "invoice_number": "Invoice Number",
+                    "description": "Description of the invoice",
+                    "amount": "100",
+                    "title": "Title",
+                    "issue_date": "2023-05-01",
+                    "due_date": "2023-05-01",
+                    "reminder": 0,
+                    "status": "Pending",
+                    "type": "Invoice",
+
+                }
+           },
+           401: {
+               "description": "Unauthorized. Invalid access token.",
+               "example": {
+                   "error": "Invalid token or Activation Expired"
+               }
+           },
+           403: {
+               "description": "Forbidden. Invalid user type.",
+               "example": {
+                   "error": "Invalid User Type"
+               }
+           },
+           404: {
+               "description": "Not Found. Invoice not found.",
+               "example": {
+                   "error": "Invoice not found"
+               }
+           },
+           500: {
+               "description": "Internal Server Error.",
+               "example": {
+                   "error": "Internal Server Error"
+               }
+           }
+       }
+   )
+   def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0 or validation['type'] == 2:
+                    number_invoice = self.request.query_params.get('invoice_number', None)
+                    invoice = Invoice.objects.get(invoice_number=number_invoice, searchable=True)
+                    if invoice:
+                        serializer = ListInvoicesSerializer(invoice)
+                        return Response(serializer.data, status=status.HTTP_200_OK)
+                    else:
+                        return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Invoice.DoesNotExist:
+            return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
