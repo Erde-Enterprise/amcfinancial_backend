@@ -11,7 +11,7 @@ import base64
 from ..models import Medical_Clinic, Invoice
 from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
 from ..middleware import teste_token
-from ..provides import user_profile_type
+from ..provides import user_profile_type, get_file_mime_type
 
 class RegisterInvoiceView(APIView):
     @extend_schema(
@@ -175,7 +175,10 @@ class RegisterInvoiceView(APIView):
                           invoice.save()
                           return Response({'response': 'Invoice created'}, status=status.HTTP_201_CREATED)
                       else:
-                          return Response({'error': 'Invoice already exists'}, status=status.HTTP_409_CONFLICT)
+                          if invoice.searchable:
+                            return Response({'error': 'Invoice already exists'}, status=status.HTTP_409_CONFLICT)
+                          else:
+                            return Response({'error': 'Number Invoice Invalid'}, status=status.HTTP_409_CONFLICT)
                     else:
                         return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
                 else:
@@ -195,7 +198,7 @@ class DeleteInvoiceView(APIView):
         request=InvoiceSerializer,
         parameters=[
             OpenApiParameter(
-                name="invoice_numbers",
+                name="invoices_number",
                 description=" List of Invoice's number.",
                 required=True,
                 type=InvoiceSerializer,
@@ -459,7 +462,8 @@ class AttachmentView(APIView):
             200: {
                 "description": "GET request successful. Returns the attachment of the invoice.",
                 "example": {
-                    "attachment": "base64 encoded string"
+                    "attachment": "base64 encoded string",
+                    "mime_type": "image/png"
                 }
             },
             400: {
@@ -498,7 +502,8 @@ class AttachmentView(APIView):
               if invoice.searchable:
                 attachment_data = invoice.attachment
                 attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
-                return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+                mime_type = get_file_mime_type(attachment_data)
+                return Response({'attachment': attachment_base64, 'mime_type': mime_type}, status=status.HTTP_200_OK)
               else:
                 return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
           else:
