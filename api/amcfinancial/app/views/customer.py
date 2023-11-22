@@ -1,6 +1,6 @@
 from django.db.models import Q
 from django.db import IntegrityError
-from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.hashers import make_password
 from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response

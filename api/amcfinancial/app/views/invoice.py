@@ -11,7 +11,7 @@ import base64
 from ..models import Medical_Clinic, Invoice
 from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
 from ..middleware import teste_token
-from ..provides import user_profile_type
+from ..provides import user_profile_type, get_file_mime_type
 
 class RegisterInvoiceView(APIView):
     @extend_schema(
@@ -462,7 +462,8 @@ class AttachmentView(APIView):
             200: {
                 "description": "GET request successful. Returns the attachment of the invoice.",
                 "example": {
-                    "attachment": "base64 encoded string"
+                    "attachment": "base64 encoded string",
+                    "mime": "image/png"
                 }
             },
             400: {
@@ -501,7 +502,8 @@ class AttachmentView(APIView):
               if invoice.searchable:
                 attachment_data = invoice.attachment
                 attachment_base64 = base64.b64encode(attachment_data).decode('utf-8') 
-                return Response({'attachment': attachment_base64}, status=status.HTTP_200_OK)
+                mime_type = get_file_mime_type(attachment_data)
+                return Response({'attachment': attachment_base64, 'mime_type': mime_type}, status=status.HTTP_200_OK)
               else:
                 return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
           else:
