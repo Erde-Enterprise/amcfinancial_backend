@@ -463,7 +463,7 @@ class AttachmentView(APIView):
                 "description": "GET request successful. Returns the attachment of the invoice.",
                 "example": {
                     "attachment": "base64 encoded string",
-                    "mime": "image/png"
+                    "mime_type": "image/png"
                 }
             },
             400: {
