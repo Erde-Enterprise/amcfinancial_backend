@@ -446,7 +446,7 @@ class AttachmentView(APIView):
     @extend_schema(
         summary="Get Attachment API",
         description="Gets the attachment of an invoice."
-                    "Token received in the Authorization header.",
+                    "Token received in the Authorization header. (The mime_type could be a aplication/* or image/*).",
         request=AttachmentSerializer,
         parameters=[
             OpenApiParameter(
@@ -460,12 +460,14 @@ class AttachmentView(APIView):
         responses=
         {
             200: {
-                "description": "GET request successful. Returns the attachment of the invoice.",
+                "description": "GET request successful. Returns the attachment of the invoice. (The mime_type could be a aplication/* or image/*).",
                 "example": {
                     "attachment": "base64 encoded string",
-                    "mime_type": "image/png"
-                }
+                    "mime_type": "image/png" 
+                },
+                
             },
+            
             400: {
                 "description": "Bad request. Missing/invalid parameters.",
                 "example": {
@@ -650,15 +652,18 @@ class UpdateInvoiceView(APIView):
     )
     def patch(self, request):
         try:
-           invoice_number = request.data['invoice_number']
-           invoice = Invoice.objects.get(invoice_number=invoice_number)
            validation = teste_token(request.headers)
            if validation['validity']:
               if validation['type'] == 0  or validation['type'] == 2: 
-                 serializer = UpdateInvoiceSerializer(invoice, data=request.data, partial=True)
-                 serializer.is_valid(raise_exception=True)
-                 serializer.save()
-                 return Response({'response': 'Invoice updated'}, status=status.HTTP_200_OK)
+                 invoice_number = request.data['invoice_number']
+                 invoice = Invoice.objects.get(invoice_number=invoice_number)
+                 if invoice.searchable:
+                    serializer = UpdateInvoiceSerializer(invoice, data=request.data, partial=True)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    return Response({'response': 'Invoice updated'}, status=status.HTTP_200_OK)
+                 else:
+                    return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
               else:
                  return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
            else:

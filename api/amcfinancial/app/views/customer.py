@@ -1,15 +1,17 @@
 from django.db.models import Q
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password
+from django.db import IntegrityError
 from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from rest_framework.exceptions import ValidationError
 
 import os
 
 from ..models import User_Root, Customer
-from ..serializers import RegisterCustomerSerializer, CustomerSerializer, ListCustomerSerializer
+from ..serializers import RegisterCustomerSerializer, CustomerSerializer, ListCustomerSerializer, UpdateCustomerSerializer
 from ..middleware import teste_token
 
 class RegisterCustomerView(APIView):
@@ -284,5 +286,34 @@ class ListCustomerView(APIView):
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UpdateCustomerView(APIView):
+    def patch(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    customer = Customer.objects.get(nickname=request.data['nickname'])
+                    if customer.searchable:
+                        serializer = UpdateCustomerSerializer(customer, data=request.data, partial=True)
+                        serializer.is_valid(raise_exception=True)
+                        serializer.save()
+                        return Response({"message": "Customer updated successfully"}, status=status.HTTP_200_OK)
+                    else:
+                        return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError as e:
+            error_message = e.detail[0] if isinstance(e.detail, list) else e.detail
+            errors = {'error': error_message}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError as e:
+            return Response({'error': 'Customer nickname already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

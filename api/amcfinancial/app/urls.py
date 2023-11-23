@@ -1,6 +1,6 @@
 from django.urls import path
-from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView
 from .views.others import ValidateTokenView, LoginView
+from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView, UpdateCustomerView
 from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView, FindInvoiceView
 from .views.clinic import RegisterClinicView, ListClinicsView, DeleteClinicView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
@@ -26,6 +26,7 @@ urlpatterns = [
 
     # UPDATE
     path('update/invoice/', UpdateInvoiceView.as_view(), name='update-invoice'),
+    path('update/customer/', UpdateCustomerView.as_view(), name='update-customer'),
 
     # OTHERS
     path('attachment/', AttachmentView.as_view(), name='attachment'),
