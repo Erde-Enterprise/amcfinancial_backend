@@ -85,6 +85,30 @@ class UpdateInvoiceSerializer(serializers.Serializer):
         except Medical_Clinic.DoesNotExist:
             raise ValidationError('Clinic not found')
 
+class UpdateCustomerSerializer(serializers.Serializer):
+    nickname = serializers.CharField()
+    new_nickname = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
+    photo = serializers.ImageField(required=False)
+    type = serializers.IntegerField(required=False)
+
+    def update(self, instance, validated_data):
+        try:
+            if 'photo' in validated_data:
+                photo = validated_data['photo'].read()
+                instance.photo = photo
+                
+            instance.nickname = validated_data.get('new_nickname', instance.nickname)
+            instance.name = validated_data.get('name', instance.name)
+            instance.email = validated_data.get('email', instance.email)
+            instance.password = validated_data.get('password', instance.password)
+            instance.type = validated_data.get('type', instance.type)
+            instance.save()
+            return instance
+        except:
+            raise ValidationError('Invalid data')
 
 # Responses
 class MedicalClinicSerializer(serializers.ModelSerializer):

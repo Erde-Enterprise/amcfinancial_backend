@@ -1,6 +1,6 @@
 from .models import User_Root, Customer, UserProfile
 from django.contrib.contenttypes.models import ContentType
-import magic
+import filetype
 
 def user_profile_type(validation):
     if validation['type'] == 0:
@@ -27,5 +27,8 @@ def user_profile_type(validation):
         return user_profiles
 
 def get_file_mime_type(file):
-    mime = magic.Magic(mime=True)
-    return mime.from_buffer(file)
+    kind = filetype.guess(file)
+    if kind is not None:
+        return kind.mime
+    else:
+        return None
