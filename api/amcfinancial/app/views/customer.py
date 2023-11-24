@@ -39,14 +39,14 @@ class RegisterCustomerView(APIView):
                 name="email",
                 description="User's email address.",
                 required=True,
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.EMAIL,
                 location="form",
             ),
             OpenApiParameter(
                 name="password",
                 description="User password.",
                 required=True,
-                type=OpenApiTypes.STR,
+                type=OpenApiTypes.PASSWORD,
                 location="form",
             ),
             OpenApiParameter(
@@ -290,6 +290,100 @@ class ListCustomerView(APIView):
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UpdateCustomerView(APIView):
+    @extend_schema(
+        summary="Update Customer API",
+        description="Update a customer.",
+        request=UpdateCustomerSerializer,
+        parameters=[
+          OpenApiParameter(
+              name="nickname",
+              description="Customer nickname",
+              required=True,
+              type=OpenApiTypes.STR,
+              location='form'
+          ),
+          OpenApiParameter(
+              name="new_nickname",
+              description="New customer nickname",
+              required=False,
+              type=OpenApiTypes.STR,
+              location='form'
+          ),
+          OpenApiParameter(
+              name="name",
+              description="Customer name",
+              required=False,
+              type=OpenApiTypes.STR,
+              location='form'
+          ),
+          OpenApiParameter(
+              name="email",
+              description="Customer email",
+              required=False,
+              type=OpenApiTypes.EMAIL,
+              location='form'
+          ),
+          OpenApiParameter(
+              name="password",
+              description="Customer password",
+              required=False,
+              type=OpenApiTypes.PASSWORD,
+              location='form'
+          ),
+          OpenApiParameter(
+              name="photo",
+              description="Customer photo",
+              required=False,
+              type=OpenApiTypes.BINARY,
+              location='form'
+          ),
+          OpenApiParameter(
+              name="type",
+              description="Customer type",
+              required=False,
+              type=OpenApiTypes.INT,
+              location='form'
+          )
+        ],
+        responses={
+            200: {
+                "description": "Successful request - Returns a success message.",
+                "example": {
+                    "response": "Customer updated successfully"
+                }
+            },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            404: {
+                "description": "Not Found. Customer not found.",
+                "example": {
+                    "error": "Customer not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
     def patch(self, request):
         try:
             validation = teste_token(request.headers)
@@ -297,6 +391,8 @@ class UpdateCustomerView(APIView):
                 if validation['type'] == 0:
                     customer = Customer.objects.get(nickname=request.data['nickname'])
                     if customer.searchable:
+                        if 'password' in request.data:
+                            request.data['password'] = make_password(request.data['password'])
                         serializer = UpdateCustomerSerializer(customer, data=request.data, partial=True)
                         serializer.is_valid(raise_exception=True)
                         serializer.save()
