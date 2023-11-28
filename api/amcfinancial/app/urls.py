@@ -1,5 +1,5 @@
 from django.urls import path
-from .views.others import ValidateTokenView, LoginView
+from .views.others import LoginView
 from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView, UpdateCustomerView, FindCustomerView
 from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView, FindInvoiceView
 from .views.clinic import RegisterClinicView, ListClinicsView, DeleteClinicView
@@ -32,7 +32,6 @@ urlpatterns = [
     # OTHERS
     path('attachment/', AttachmentView.as_view(), name='attachment'),
     path('login/', LoginView.as_view(), name='login'),
-    path('validate-token/',ValidateTokenView.as_view(), name='validate-token'),
     
     # SWAGGER
     path('schema/', SpectacularAPIView.as_view(), name='schema'),

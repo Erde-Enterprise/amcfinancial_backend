@@ -3,53 +3,10 @@ from django.contrib.auth.hashers import check_password
 from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-
-import base64
 
 from ..models import User_Root, Customer
 from ..serializers import LoginSerializer, LoginCustomerResponseSerializer, LoginUserRootResponseSerializer
-from ..middleware import teste_token
-
-
-
-class ValidateTokenView(APIView):
-
-  @extend_schema(
-        summary="Validates User Token API",
-        description="Validates the authenticity of a user token received in the Authorization header.",
-        responses={
-            200: {
-                "description": "Successful token validation.",
-                "example": {
-                    "response": "Valid token"
-                }
-            },
-            401: {
-                "description": "Invalid token or Activation Expired.",
-                "example": {
-                    "error": "Invalid token or Activation Expired"
-                }
-            },
-            500: {
-                "description": "Internal Server Error.",
-                "example": {
-                    "error": "Internal Server Error"
-                }
-            }
-        }
-    )
-  
-  def get(self,request):
-      try:
-          validation = teste_token(request.headers)
-          if validation['validity']:
-              return Response({'response':'Valid token'}, status=status.HTTP_200_OK)
-          else:
-              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
-      except:
-          return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
     @extend_schema(
