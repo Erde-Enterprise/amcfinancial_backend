@@ -292,7 +292,7 @@ class ListCustomerView(APIView):
 class UpdateCustomerView(APIView):
     @extend_schema(
         summary="Update Customer API",
-        description="Update a customer.",
+        description="Update a customer. Token received in the Authorization header.",
         request=UpdateCustomerSerializer,
         parameters=[
           OpenApiParameter(
@@ -411,5 +411,85 @@ class UpdateCustomerView(APIView):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
             return Response({'error': 'Customer nickname already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FindCustomerView(APIView):
+    @extend_schema(
+        summary="Find Customer API",
+        description="Find a customer.Token received in the Authorization header.",
+        request=CustomerSerializer,
+        parameters=[
+          OpenApiParameter(
+              name="nickname",
+              description="Customer nickname",
+              required=True,
+              type=OpenApiTypes.STR,
+              location='path',
+          )
+        ],
+        responses={
+            200: {
+                "description": "Successful request - Returns a customer.",
+                "example": {
+                       "name": "John Doe",
+                        "nickname": "johndoe",
+                        "email": "gFqHn@example.com",
+                        "photo": "/9vjodsadl=fawfdsdegk45ks",
+                        "type": 1
+                }
+            },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            404: {
+                "description": "Not Found. Customer not found.",
+                "example": {
+                    "error": "Customer not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+        
+    )
+    def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    nickname_serializer = CustomerSerializer(data = self.request.query_params)
+                    nickname_serializer.is_valid(raise_exception=True)
+                    customer = Customer.objects.get(nickname=nickname_serializer.validated_data['nickname'], searchable=True)
+                    serializer = ListCustomerSerializer(customer)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
+        except serializers.ValidationError as e:
+            errors = dict(e.detail)  
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

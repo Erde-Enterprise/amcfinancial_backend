@@ -201,7 +201,6 @@ class DeleteInvoiceView(APIView):
                 name="invoices_number",
                 description=" List of Invoice's number.",
                 required=True,
-                type=InvoiceSerializer,
                 location="form",
                 ),
         ],
@@ -337,11 +336,8 @@ class FindInvoiceView(APIView):
                 if validation['type'] == 0 or validation['type'] == 2:
                     number_invoice = self.request.query_params.get('invoice_number', None)
                     invoice = Invoice.objects.get(invoice_number=number_invoice, searchable=True)
-                    if invoice:
-                        serializer = ListInvoicesSerializer(invoice)
-                        return Response(serializer.data, status=status.HTTP_200_OK)
-                    else:
-                        return Response({'error': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+                    serializer = ListInvoicesSerializer(invoice)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
                 else:
                     return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
             else:
