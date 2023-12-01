@@ -112,21 +112,16 @@ class UpdateCustomerSerializer(serializers.Serializer):
             raise ValidationError('Invalid data')
 
 # Responses
-class MedicalClinicSerializer(serializers.ModelSerializer):
+class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medical_Clinic
         fields = ('name','color')
 
 class ListInvoicesSerializer(serializers.ModelSerializer):
-    clinic = MedicalClinicSerializer()
+    clinic = ListClinicSerializer()
     class Meta:
         model = Invoice
         exclude =('id','attachment','user', 'searchable')
-
-class ListClinicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Medical_Clinic
-        fields = ('name','color')
 
 class ListCustomerSerializer(serializers.ModelSerializer):
     mime_type = serializers.SerializerMethodField()

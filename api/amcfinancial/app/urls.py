@@ -2,7 +2,7 @@ from django.urls import path
 from .views.others import LoginView
 from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView, UpdateCustomerView, FindCustomerView
 from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView, FindInvoiceView
-from .views.clinic import RegisterClinicView, ListClinicsView, DeleteClinicView
+from .views.clinic import RegisterClinicView, ListClinicsView, DeleteClinicView, FindClinicView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
@@ -19,6 +19,7 @@ urlpatterns = [
     # FIND
     path('find/invoice/', FindInvoiceView.as_view(), name='find-invoice'),
     path('find/customer/', FindCustomerView.as_view(), name='find-customer'),
+    path('find/clinic/', FindClinicView.as_view(), name='find-clinic'),
 
     # DELETE
     path('delete/customer/', DeleteCustomerView.as_view(), name='delete-customer'),
