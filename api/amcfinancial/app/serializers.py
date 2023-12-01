@@ -111,6 +111,19 @@ class UpdateCustomerSerializer(serializers.Serializer):
         except:
             raise ValidationError('Invalid data')
 
+class UpdateClinicSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    new_name = serializers.CharField(required=False)
+    color = serializers.CharField(required=False)
+
+    def update(self, instance, validated_data):
+        try:
+            instance.name = validated_data.get('new_name', instance.name)
+            instance.color = validated_data.get('new_color', instance.color)
+            instance.save()
+            return instance
+        except:
+            raise ValidationError('Invalid data')
 # Responses
 class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:

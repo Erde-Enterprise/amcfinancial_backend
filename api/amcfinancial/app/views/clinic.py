@@ -2,10 +2,12 @@ from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from rest_framework.exceptions import ValidationError
 
+from django.db import IntegrityError
 
 from ..models import  Medical_Clinic
-from ..serializers import  RegisterClinicSerializer, ListClinicSerializer, ClinicSerializer
+from ..serializers import  RegisterClinicSerializer, ListClinicSerializer, ClinicSerializer, UpdateClinicSerializer
 from ..middleware import teste_token
 
 
@@ -303,5 +305,97 @@ class FindClinicView(APIView):
           return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except Medical_Clinic.DoesNotExist:
             return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class UpdateClinicView(APIView):
+    @extend_schema(
+        summary="Update Clinic API",
+        description="Update Clinic. Token received in the Authorization header.",
+        request=UpdateClinicSerializer,
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                description="Clinic's name.",
+                required=True,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="new_name",
+                description="New Clinic's name.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="color",
+                description="New Clinic's color.",
+                required=False,
+                type=OpenApiTypes.STR,
+                location="form",
+            )
+        ],
+        responses={
+            200: {
+                "description": "Update Clinic - Returns a clinic.",
+                "example": {
+                   "message": "Clinic updated successfully"
+                }
+            },
+            400: {
+                "description": "Bad request. Missing/invalid parameters.",
+                "example": {
+                    "error": "Bad request. Missing/invalid parameters."
+                }
+            },
+            401: {
+                "description": "Unauthorized. Invalid access token.",
+                "example": {
+                    "error": "Invalid token or Activation Expired"
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": "Invalid User Type"
+                }
+            },
+            404: {
+                "description": "Not Found. Clinic not found.",
+                "example": {
+                    "error": "Clinic not found"
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+        }
+    )
+    def patch(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    clinic = Medical_Clinic.objects.get(name=request.data['name'], searchable=True)
+                    serializer = UpdateClinicSerializer(clinic, data=request.data, partial=True)
+                    serializer.is_valid(raise_exception=True)                    
+                    serializer.save()
+                    return Response({"message": "Clinic updated successfully"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except ValidationError as e:
+            error_message = e.detail[0] if isinstance(e.detail, list) else e.detail
+            errors = {'error': error_message}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except Medical_Clinic.DoesNotExist:
+            return Response({'error': 'Clinic not found'}, status=status.HTTP_404_NOT_FOUND)
+        except IntegrityError as e:
+            return Response({'error': 'Clinic name already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
