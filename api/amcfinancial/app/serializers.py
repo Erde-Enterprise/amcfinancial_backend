@@ -3,6 +3,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import ValidationError
 
 from .models import Invoice, Medical_Clinic, Customer, User_Root
+from .provides import get_file_mime_type
         
 # Requests
 class LoginSerializer(serializers.Serializer):
@@ -110,47 +111,69 @@ class UpdateCustomerSerializer(serializers.Serializer):
         except:
             raise ValidationError('Invalid data')
 
+class UpdateClinicSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    new_name = serializers.CharField(required=False)
+    color = serializers.CharField(required=False)
+
+    def update(self, instance, validated_data):
+        try:
+            instance.name = validated_data.get('new_name', instance.name)
+            instance.color = validated_data.get('new_color', instance.color)
+            instance.save()
+            return instance
+        except:
+            raise ValidationError('Invalid data')
 # Responses
-class MedicalClinicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Medical_Clinic
-        fields = ('name','color')
-
-class ListInvoicesSerializer(serializers.ModelSerializer):
-    clinic = MedicalClinicSerializer()
-    class Meta:
-        model = Invoice
-        exclude =('id','attachment','user', 'searchable')
-
 class ListClinicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medical_Clinic
         fields = ('name','color')
 
+class ListInvoicesSerializer(serializers.ModelSerializer):
+    clinic = ListClinicSerializer()
+    class Meta:
+        model = Invoice
+        exclude =('id','attachment','user', 'searchable')
+
 class ListCustomerSerializer(serializers.ModelSerializer):
+    mime_type = serializers.SerializerMethodField()
+    def get_mime_type(self, obj):
+        photo = obj.photo
+        return get_file_mime_type(photo)
     class Meta:
         model = Customer
-        fields = ('name','nickname','email','photo','type')
+        fields = ('name','nickname','email','photo', 'mime_type','type')
 
 class LoginCustomerResponseSerializer(serializers.ModelSerializer):
     token = serializers.SerializerMethodField()
+    mime_type = serializers.SerializerMethodField()
     class Meta:
         model = Customer
-        fields = ('token','name','nickname','email','photo','type')
+        fields = ('token','name','nickname','email','photo','mime_type','type')
     
     def get_token(self, obj):
         refresh = RefreshToken.for_user(obj)
         refresh['type'] = obj.type
         return str(refresh)
-
+    
+    def get_mime_type(self, obj):
+        photo = obj.photo
+        return get_file_mime_type(photo)
+    
 class LoginUserRootResponseSerializer(serializers.ModelSerializer):
     type = serializers.IntegerField(default=0)
     token = serializers.SerializerMethodField()
+    mime_type = serializers.SerializerMethodField()
     class Meta:
         model = User_Root
-        fields = ('token','name','nickname','email_root','photo', 'type')
+        fields = ('token','name','nickname','email_root','photo','mime_type', 'type')
 
     def get_token(self, obj):
         refresh = RefreshToken.for_user(obj)
         refresh['type'] = 0
         return str(refresh)
+    
+    def get_mime_type(self, obj):
+        photo = obj.photo
+        return get_file_mime_type(photo)
