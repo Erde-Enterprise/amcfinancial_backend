@@ -247,6 +247,7 @@ class ListCustomerView(APIView):
                            "nickname": "johndoe",
                            "email": "gFqHn@example.com",
                            "photo": "/9vjodsadl=fawfdsdegk45ks",
+                           "mime_type": "image/jpeg",
                            "type": 1
                        }
                    ]
@@ -436,6 +437,7 @@ class FindCustomerView(APIView):
                         "nickname": "johndoe",
                         "email": "gFqHn@example.com",
                         "photo": "/9vjodsadl=fawfdsdegk45ks",
+                        "mime_type": "image/jpeg",
                         "type": 1
                 }
             },
