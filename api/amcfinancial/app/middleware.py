@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.http import Http404
 from .models import User_Root, Customer
 import jwt
 from amcfinancial.settings import SECRET_KEY
