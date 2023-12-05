@@ -1,6 +1,12 @@
 # 📈 AMC Financial
 
-Bem-vindo ao Backend do AMC Financial da Avegena Medical Center, projeto pela Erde EnterPrise
+Bem-vindo ao Backend do AMC Financial da Avegena Medical Center, projeto pela Erde EnterPrise.
+Para Detalhes mais específicos a respeito da lógica e estrutura do backend, consulte a [documentação ](https://www.notion.so/AMC-Financial-893a044b008747a89fb810caee500d4d?pvs=4)
+
+# Versões
+- Python 3.11
+- SQL Server 2019
+
 
 ## Configurando o Ambiente de Desenvolvimento
 

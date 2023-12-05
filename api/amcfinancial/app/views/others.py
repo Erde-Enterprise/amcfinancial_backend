@@ -37,7 +37,8 @@ class LoginView(APIView):
                     "email": "user@example.com",
                     "nickname": "user123",
                     "name": "John Doe",
-                    "photo": "http://example.com/user.jpg",
+                    "photo": "/98uyoiwncs+9fd65df=fs5gfd",
+                    "mime_type": "image/jpeg",
                     "user_type": 1,
                 }
             },
