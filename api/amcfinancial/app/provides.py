@@ -27,8 +27,12 @@ def user_profile_type(validation):
         return user_profiles
 
 def get_file_mime_type(file):
-    kind = filetype.guess(file)
-    if kind is not None:
-        return kind.mime
-    else:
-        return None
+    try:
+        kind = filetype.guess(bytearray(file))
+        if kind is not None:
+            return kind.mime
+        else:
+            return None
+    except Exception as e:
+        print(e)
+        

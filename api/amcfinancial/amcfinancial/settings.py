@@ -88,12 +88,12 @@ WSGI_APPLICATION = 'amcfinancial.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME':  NAME,
         'USER': USER,
         'PASSWORD': PASSWORD,
         'HOST': HOST,
-        'PORT': '',
+        'PORT': '5433',
     }
 }
 

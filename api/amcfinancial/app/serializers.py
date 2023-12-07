@@ -167,7 +167,7 @@ class LoginUserRootResponseSerializer(serializers.ModelSerializer):
     mime_type = serializers.SerializerMethodField()
     class Meta:
         model = User_Root
-        fields = ('token','name','nickname','email_root','photo','mime_type', 'type')
+        fields = ('token','name','nickname','email_root','photo', 'mime_type', 'type')
 
     def get_token(self, obj):
         refresh = RefreshToken.for_user(obj)
