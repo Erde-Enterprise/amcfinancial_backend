@@ -16,7 +16,10 @@ import os
 sys.path.append('..')
 from databaseconf import NAME, USER, PASSWORD, HOST
 from datetime import timedelta
+import environ
 
+env = environ.Env()
+environ.Env.read_env()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -32,7 +35,7 @@ SECRET_KEY = 'django-insecure-5)#p_=mvoox-#a^xtf0xs_xm@wey2ap&m3gurq4n&_2n!vy(2@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -86,6 +89,7 @@ WSGI_APPLICATION = 'amcfinancial.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -95,6 +99,16 @@ DATABASES = {
         'HOST': HOST,
         'PORT': '5433',
     }
+}
+"""
+
+# Render PostgreSQL Database
+import dj_database_url
+
+DATABASES = {
+
+    'default': dj_database_url.parse(env('DATABASE_URL'))
+
 }
 
 
