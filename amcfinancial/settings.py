@@ -14,7 +14,6 @@ from pathlib import Path
 import sys
 import os
 sys.path.append('..')
-from databaseconf import NAME, USER, PASSWORD, HOST
 from datetime import timedelta
 import environ
 
