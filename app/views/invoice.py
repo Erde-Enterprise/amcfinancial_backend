@@ -7,7 +7,6 @@ from django.db.models import Q
 from django.db import IntegrityError
 import base64
 
-
 from ..models import Medical_Clinic, Invoice
 from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
 from ..middleware import teste_token
