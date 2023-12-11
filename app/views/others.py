@@ -5,8 +5,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
-from ..models import User_Root, Customer
+from ..models import User_Root, Customer, Access_History
 from ..serializers import LoginSerializer, LoginCustomerResponseSerializer, LoginUserRootResponseSerializer
+from ..provides import location_validation
 
 class LoginView(APIView):
     @extend_schema(
@@ -76,8 +77,25 @@ class LoginView(APIView):
           
           customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
           if customer and check_password(password, customer.password) and customer.searchable:
-              response = LoginCustomerResponseSerializer(customer)
-              return Response(response.data, status=status.HTTP_200_OK)
+                localization = location_validation(serializer.validated_data['latitude'], serializer.validated_data['longitude'])
+                if localization['validation']:
+                    access_history = Access_History.objects.create(
+                        login_date = serializer.validated_data['login_date'],
+                        location = localization['country'],
+                        customer = customer
+                    )
+                    access_history.save()
+                    response = LoginCustomerResponseSerializer(customer)
+                    return Response(response.data, status=status.HTTP_200_OK)
+                else:
+                    country = localization.get('country', None)
+                    if country:
+                        return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+                    else:
+                        return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+
+
           
           return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
         except serializers.ValidationError as e:

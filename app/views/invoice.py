@@ -413,7 +413,7 @@ class ListInvoicesView(APIView):
           if validation['validity']:
             start_date = self.request.query_params.get('start_date', None)
             end_date = self.request.query_params.get('end_date', None)
-            order_by_fields = ['-reminder', 'issue_date']
+            order_by_fields = ['-reminder', 'due_date']
             date_filters = Q()
             if start_date and end_date:
               date_filters &= Q(issue_date__range=[start_date, end_date])

@@ -56,5 +56,5 @@ class Access_History(models.Model):
     login_date = models.DateTimeField()
     location = models.CharField(max_length=255)
     searchable = models.BooleanField(default=True)
-    user = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
 
