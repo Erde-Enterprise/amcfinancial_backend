@@ -119,7 +119,7 @@ class UpdateClinicSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         try:
             instance.name = validated_data.get('new_name', instance.name)
-            instance.color = validated_data.get('new_color', instance.color)
+            instance.color = validated_data.get('color', instance.color)
             instance.save()
             return instance
         except:
