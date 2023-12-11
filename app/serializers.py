@@ -25,7 +25,7 @@ class RegisterClinicSerializer(serializers.Serializer):
 class RegisterInvoiceSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
     description = serializers.CharField(required=False)
-    amount = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
     title = serializers.CharField()
     issue_date = serializers.DateField()
     due_date = serializers.DateField()
@@ -51,7 +51,7 @@ class UpdateInvoiceSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
     new_invoice_number = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
-    amount = serializers.IntegerField(required=False)
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     title = serializers.CharField(required=False)
     issue_date = serializers.DateField(required=False)
     due_date = serializers.DateField(required=False)

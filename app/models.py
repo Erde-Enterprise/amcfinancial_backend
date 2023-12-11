@@ -38,7 +38,7 @@ class Invoice(models.Model):
     id = models.AutoField(primary_key=True)
     invoice_number = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
-    amount = models.IntegerField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     title = models.CharField(max_length=255)
     issue_date = models.DateField()
     due_date = models.DateField()
