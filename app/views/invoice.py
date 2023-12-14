@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from rest_framework.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, IntegerField
 from django.db import IntegrityError
 import base64
 
@@ -413,29 +413,45 @@ class ListInvoicesView(APIView):
           if validation['validity']:
             start_date = self.request.query_params.get('start_date', None)
             end_date = self.request.query_params.get('end_date', None)
-            order_by_fields = ['-reminder', 'issue_date']
             date_filters = Q()
             if start_date and end_date:
-              date_filters &= Q(issue_date__range=[start_date, end_date])
+              date_filters &= Q(due_date__range=[start_date, end_date])
             elif start_date:
-              date_filters &= Q(issue_date__gte=start_date)
+              date_filters &= Q(due_date__gte=start_date)
             elif end_date:
-              date_filters &= Q(issue_date__lte=end_date)
+              date_filters &= Q(due_date__lte=end_date)
             else:
-              invoices = Invoice.objects.filter(searchable=True).order_by(*order_by_fields)
+              invoices = Invoice.objects.filter(searchable=True)
+              invoices = self.annotate_status_priority(invoices)
               reponse_serializer = ListInvoicesSerializer(invoices, many=True)
               return Response(reponse_serializer.data, status=status.HTTP_200_OK)
             
-            invoices = Invoice.objects.filter(date_filters | Q(reminder=3), searchable=True).order_by(*order_by_fields)
+            invoices = Invoice.objects.filter(date_filters | (~Q(reminder=0) & ~Q(status='P')), searchable=True)
+            invoices = self.annotate_status_priority(invoices)
             reponse_serializer = ListInvoicesSerializer(invoices, many=True)
             return Response(reponse_serializer.data, status=status.HTTP_200_OK)
           else:
             return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+          
         except ValidationError as e:
             errors = {'error': str(e)}
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            errors = {'error': str(e)}
+            return Response(errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def annotate_status_priority(self, invoices):
+        return invoices.annotate(
+            status_priority=Case(
+                When(Q(status='E'), then=Value(3)),
+                When(Q(status='D'), then=Value(2)),
+                When(Q(status='S'), then=Value(1)),
+                When(Q(status='P'), then=Value(0)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        ).order_by('-status_priority', '-reminder', 'due_date')
 
 class AttachmentView(APIView):
     @extend_schema(
