@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from django.db.models import Q, Case, When, Value, IntegerField
 from django.db import IntegrityError
 import base64
+from decimal import Decimal
 
 from ..models import Medical_Clinic, Invoice
 from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
@@ -37,7 +38,7 @@ class RegisterInvoiceView(APIView):
                 name="amount",
                 description="Invoice's amount.",
                 required=True,
-                type=OpenApiTypes.INT,
+                type=OpenApiTypes.STR,
                 location="form",
             ),
             OpenApiParameter(

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import ValidationError
 
+from decimal import Decimal
 from .models import Invoice, Medical_Clinic, Customer, User_Root
 from .provides import get_file_mime_type
         
@@ -51,7 +52,7 @@ class UpdateInvoiceSerializer(serializers.Serializer):
     invoice_number = serializers.CharField()
     new_invoice_number = serializers.CharField(required=False)
     description = serializers.CharField(required=False)
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    amount = serializers.CharField(required=False)
     title = serializers.CharField(required=False)
     issue_date = serializers.DateField(required=False)
     due_date = serializers.DateField(required=False)
@@ -60,6 +61,11 @@ class UpdateInvoiceSerializer(serializers.Serializer):
     status = serializers.CharField(required=False)
     type = serializers.CharField(required=False)
     name_clinic = serializers.CharField(required=False)
+
+    def to_internal_value(self, data):
+        if 'amount' in data and data['amount']:
+            data['amount'] = Decimal(data['amount'])
+        return super().to_internal_value(data)
 
     def update(self, instance, validated_data):
         try:
