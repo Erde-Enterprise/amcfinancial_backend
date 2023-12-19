@@ -38,7 +38,11 @@ class RegisterInvoiceView(APIView):
                 name="amount",
                 description="Invoice's amount.",
                 required=True,
+<<<<<<< HEAD
                 type=OpenApiTypes.STR,
+=======
+                type=OpenApiTypes.NUMBER,
+>>>>>>> 222adcac40729f51e73f0f06ebfe227edaa8f3ce
                 location="form",
             ),
             OpenApiParameter(
