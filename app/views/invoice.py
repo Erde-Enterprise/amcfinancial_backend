@@ -63,6 +63,13 @@ class RegisterInvoiceView(APIView):
                 location="form",
             ),
             OpenApiParameter(
+                name="scheduled_date",
+                description="Invoice's scheduled date.",
+                required=False,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
                 name="attachment",
                 description="Invoice's attachment.",
                 required=True,
@@ -165,6 +172,7 @@ class RegisterInvoiceView(APIView):
                               title=serializer.validated_data['title'],
                               issue_date=serializer.validated_data['issue_date'],
                               due_date=serializer.validated_data['due_date'],
+                              scheduled_date=serializer.validated_data.get('scheduled_date', None),
                               attachment=attachment_bytes,
                               reminder=reminder,
                               status=serializer.validated_data['status'],
@@ -583,6 +591,13 @@ class UpdateInvoiceView(APIView):
             OpenApiParameter(
                 name="due_date",
                 description="Due Date of the invoice.",
+                required=False,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="scheduled_date",
+                description="Scheduled Date of the invoice.",
                 required=False,
                 type=OpenApiTypes.DATE,
                 location="form",

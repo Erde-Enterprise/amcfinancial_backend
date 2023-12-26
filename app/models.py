@@ -42,6 +42,7 @@ class Invoice(models.Model):
     title = models.CharField(max_length=255)
     issue_date = models.DateField()
     due_date = models.DateField()
+    scheduled_date = models.DateField(default=None, null=True)
     attachment = models.BinaryField(null=True, blank=True)
     reminder = models.IntegerField()
     status = models.CharField(max_length=255)
