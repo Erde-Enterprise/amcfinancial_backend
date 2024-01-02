@@ -706,6 +706,45 @@ class UpdateInvoiceView(APIView):
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class SumAmountView(APIView):
+   @extend_schema(
+       summary="Sum of amount invoices.",
+       description="Sum of all invoices not paid or scheduled.",
+       parameters=[
+           OpenApiParameter(
+               name="scheduled_date",
+               description="Scheduled Date of the invoice.",
+               required=False,
+               type=OpenApiTypes.DATE,
+               location="path",
+           )
+       ],
+       responses={
+           200: {
+               "description": "Sum of amount invoices.",
+               "example": {
+                   "response": "Sum of amount invoices."
+               }
+           },
+           401: {
+               "description": "Unauthorized. Invalid access token.",
+               "example": {
+                   "error": "Invalid token or Activation Expired"
+               }
+           },
+           403: {
+               "description": "Forbidden. Invalid user type.",
+               "example": {
+                   "error": "Invalid User Type"
+               }
+           },
+           500: {
+               "description": "Internal Server Error.",
+               "example": {
+                   "error": "Internal Server Error"
+               }
+           }
+       }
+   )
    def get(self, request):
        try:
            validation = teste_token(request.headers)
