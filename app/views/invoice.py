@@ -6,7 +6,6 @@ from rest_framework.exceptions import ValidationError
 from django.db.models import Q, Case, When, Value, IntegerField
 from django.db import IntegrityError
 import base64
-from decimal import Decimal
 
 from ..models import Medical_Clinic, Invoice
 from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
@@ -705,3 +704,28 @@ class UpdateInvoiceView(APIView):
             return Response({'error': 'Number Invoice already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class SumAmountView(APIView):
+   def get(self, request):
+       try:
+           validation = teste_token(request.headers)
+           if validation['validity']:
+              if validation['type'] == 0  or validation['type'] == 2: 
+                 scheduled_date = self.request.query_params.get('scheduled_date', None)
+                 if scheduled_date:
+                    invoices = Invoice.objects.filter(scheduled_date=scheduled_date, searchable=True)
+                    amount = 0
+                    for invoice in invoices:
+                       amount += invoice.amount
+                    return Response({'response': amount}, status=status.HTTP_200_OK)
+                 invoices = Invoice.objects.filter(~Q(status='P'), searchable=True)
+                 amount = 0
+                 for invoice in invoices:
+                    amount += invoice.amount
+                 return Response({'response': amount}, status=status.HTTP_200_OK)
+              else:
+                 return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+           else:
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+       except:
+           return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
