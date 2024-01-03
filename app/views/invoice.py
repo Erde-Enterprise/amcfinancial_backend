@@ -722,7 +722,7 @@ class SumAmountView(APIView):
            200: {
                "description": "Sum of amount invoices.",
                "example": {
-                   "response": 152.38
+                   "sum": 152.38
                }
            },
            401: {
