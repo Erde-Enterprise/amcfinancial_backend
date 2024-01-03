@@ -6,7 +6,6 @@ from rest_framework.exceptions import ValidationError
 from django.db.models import Q, Case, When, Value, IntegerField
 from django.db import IntegrityError
 import base64
-from decimal import Decimal
 
 from ..models import Medical_Clinic, Invoice
 from ..serializers import RegisterInvoiceSerializer, ListInvoicesSerializer, AttachmentSerializer, InvoiceSerializer, UpdateInvoiceSerializer
@@ -59,6 +58,13 @@ class RegisterInvoiceView(APIView):
                 name="due_date",
                 description="Invoice's due date.",
                 required=True,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
+                name="scheduled_date",
+                description="Invoice's scheduled date.",
+                required=False,
                 type=OpenApiTypes.DATE,
                 location="form",
             ),
@@ -165,6 +171,7 @@ class RegisterInvoiceView(APIView):
                               title=serializer.validated_data['title'],
                               issue_date=serializer.validated_data['issue_date'],
                               due_date=serializer.validated_data['due_date'],
+                              scheduled_date=serializer.validated_data.get('scheduled_date', None),
                               attachment=attachment_bytes,
                               reminder=reminder,
                               status=serializer.validated_data['status'],
@@ -588,6 +595,13 @@ class UpdateInvoiceView(APIView):
                 location="form",
             ),
             OpenApiParameter(
+                name="scheduled_date",
+                description="Scheduled Date of the invoice.",
+                required=False,
+                type=OpenApiTypes.DATE,
+                location="form",
+            ),
+            OpenApiParameter(
                 name="attachment",
                 description="Attachment of the invoice.",
                 required=False,
@@ -690,3 +704,67 @@ class UpdateInvoiceView(APIView):
             return Response({'error': 'Number Invoice already exists'}, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class SumAmountView(APIView):
+   @extend_schema(
+       summary="Sum of amount invoices.",
+       description="Sum of all invoices not paid or scheduled.",
+       parameters=[
+           OpenApiParameter(
+               name="scheduled_date",
+               description="Scheduled Date of the invoice.",
+               required=False,
+               type=OpenApiTypes.DATE,
+               location="path",
+           )
+       ],
+       responses={
+           200: {
+               "description": "Sum of amount invoices.",
+               "example": {
+                   "response": "Sum of amount invoices."
+               }
+           },
+           401: {
+               "description": "Unauthorized. Invalid access token.",
+               "example": {
+                   "error": "Invalid token or Activation Expired"
+               }
+           },
+           403: {
+               "description": "Forbidden. Invalid user type.",
+               "example": {
+                   "error": "Invalid User Type"
+               }
+           },
+           500: {
+               "description": "Internal Server Error.",
+               "example": {
+                   "error": "Internal Server Error"
+               }
+           }
+       }
+   )
+   def get(self, request):
+       try:
+           validation = teste_token(request.headers)
+           if validation['validity']:
+              if validation['type'] == 0  or validation['type'] == 2: 
+                 scheduled_date = self.request.query_params.get('scheduled_date', None)
+                 if scheduled_date:
+                    invoices = Invoice.objects.filter(scheduled_date=scheduled_date, searchable=True)
+                    amount = 0
+                    for invoice in invoices:
+                       amount += invoice.amount
+                    return Response({'response': amount}, status=status.HTTP_200_OK)
+                 invoices = Invoice.objects.filter(~Q(status='P'), searchable=True)
+                 amount = 0
+                 for invoice in invoices:
+                    amount += invoice.amount
+                 return Response({'response': amount}, status=status.HTTP_200_OK)
+              else:
+                 return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+           else:
+              return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+       except:
+           return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
