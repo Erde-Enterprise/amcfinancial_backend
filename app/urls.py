@@ -1,7 +1,7 @@
 from django.urls import path
 from .views.others import LoginView
 from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView, UpdateCustomerView, FindCustomerView
-from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView, FindInvoiceView, SumAmountView
+from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView, FindInvoiceView, SumAmountView, SumScheduledView
 from .views.clinic import RegisterClinicView, ListClinicsView, DeleteClinicView, FindClinicView, UpdateClinicView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
@@ -16,6 +16,7 @@ urlpatterns = [
     path('list/clinics/', ListClinicsView.as_view(), name='list-all-clinics'),
     path('list/customers/', ListCustomerView.as_view(), name='list-all-customers'),
     path('sum/amount/', SumAmountView.as_view(), name='sum-amount'),
+    path('sum/scheduled/', SumScheduledView.as_view(), name='sum-scheduled'),
 
     # FIND
     path('find/invoice/', FindInvoiceView.as_view(), name='find-invoice'),
