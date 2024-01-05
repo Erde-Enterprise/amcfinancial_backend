@@ -4,9 +4,13 @@ from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+import pytz
+from datetime import datetime
 
-from ..models import User_Root, Customer
-from ..serializers import LoginSerializer, LoginCustomerResponseSerializer, LoginUserRootResponseSerializer
+from ..models import User_Root, Customer, Access_History
+from ..serializers import LoginSerializer, LoginCustomerResponseSerializer, LoginUserRootResponseSerializer, ListAccessHistorySerializer
+from ..provides import user_profile_type
+from ..middleware import teste_token
 
 class LoginView(APIView):
     @extend_schema(
@@ -86,3 +90,67 @@ class LoginView(APIView):
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+# class InsertAccessView(APIView):
+#     def get(self, request):
+#         validation = teste_token(request.headers)
+#         user = user_profile_type(validation)
+#         timezone_switzerland = pytz.timezone('Europe/Zurich')
+#         access_history = Access_History.objects.create(
+#             login_date = datetime.now(timezone_switzerland).date(),
+#             login_time = datetime.now(timezone_switzerland).replace(microsecond=0).time(),
+#             location = "Switzerland",
+#             status = True,
+#             user = user
+#         )
+#         access_history.save()
+#         return Response({'response': 'Access History inserted successfully'}, status=status.HTTP_200_OK)
+
+class ListAccessHistoryView(APIView):
+    @extend_schema(
+      summary="List Access History API",
+      description="List all access history.",
+      responses={
+            200: {
+                "description": "Successful request - Returns a list of access history.",
+                "example": {
+                            "user_nickname": "user123",
+                            "login_date": "2022-01-01",
+                            "login_time": "00:00:00",
+                            "location": "Switzerland",
+                            "status": True
+                        }
+                },
+            401: {
+                "description": "Unauthorized. Invalid token.",
+                "example": {
+                    "error": 'Unauthorized User'
+                }
+            },
+            403: {
+                "description": "Forbidden. Invalid user type.",
+                "example": {
+                    "error": 'Invalid User Type'
+                }
+            },
+            500: {
+                "description": "Internal Server Error.",
+                "example": {
+                    "error": "Internal Server Error"
+                }
+            }
+      }
+    )
+    def get(self, request):
+        try:
+            validation = teste_token(request.headers)
+            if validation['validity']:
+                if validation['type'] == 0:
+                    access_history = Access_History.objects.filter(searchable=True)
+                    serializer = ListAccessHistorySerializer(access_history, many=True)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

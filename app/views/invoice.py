@@ -740,7 +740,6 @@ class SumAmountView(APIView):
        try:
            validation = teste_token(request.headers)
            if validation['validity']:
-              if validation['type'] == 0  or validation['type'] == 2:  
                  invoices = Invoice.objects.filter(~Q(status='P'), searchable=True)
                  if invoices.exists():
                     amount = 0
@@ -749,8 +748,6 @@ class SumAmountView(APIView):
                     return Response({'sum': amount}, status=status.HTTP_200_OK)
                  else:
                     return Response({'sum': 0}, status=status.HTTP_200_OK)
-              else:
-                 return Response({'error': 'Invalid User Type'}, status=status.HTTP_403_FORBIDDEN)
            else:
               return Response({'error': 'Invalid token or Activation Expired'}, status=status.HTTP_401_UNAUTHORIZED)
        except:
