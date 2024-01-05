@@ -54,8 +54,10 @@ class Invoice(models.Model):
 
 class Access_History(models.Model):
     id = models.AutoField(primary_key=True)
-    login_date = models.DateTimeField()
+    login_date = models.DateField()
+    login_time = models.TimeField(default='00:00:00')
     location = models.CharField(max_length=255)
     searchable = models.BooleanField(default=True)
-    user = models.ForeignKey(User_Root, on_delete=models.SET_NULL, null=True)
+    status = models.BooleanField(default=False)
+    user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
 
