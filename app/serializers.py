@@ -3,7 +3,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import ValidationError
 
 from decimal import Decimal
-from .models import Invoice, Medical_Clinic, Customer, User_Root
+from .models import Invoice, Medical_Clinic, Customer, User_Root, Access_History
 from .provides import get_file_mime_type
         
 # Requests
@@ -186,3 +186,12 @@ class LoginUserRootResponseSerializer(serializers.ModelSerializer):
     def get_mime_type(self, obj):
         photo = obj.photo
         return get_file_mime_type(photo)
+    
+
+class ListAccessHistorySerializer(serializers.ModelSerializer):
+    user_nickname = serializers.SerializerMethodField()
+    class Meta:
+        model = Access_History
+        exclude = ('id', 'searchable','user')
+    def get_user_nickname(self, obj):
+        return obj.user.user.nickname

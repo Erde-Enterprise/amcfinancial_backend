@@ -1,5 +1,5 @@
 from django.urls import path
-from .views.others import LoginView
+from .views.others import LoginView, ListAccessHistoryView
 from .views.customer import RegisterCustomerView, DeleteCustomerView, ListCustomerView, UpdateCustomerView, FindCustomerView
 from .views.invoice import RegisterInvoiceView, ListInvoicesView, AttachmentView, DeleteInvoiceView, UpdateInvoiceView, FindInvoiceView, SumAmountView, SumScheduledView
 from .views.clinic import RegisterClinicView, ListClinicsView, DeleteClinicView, FindClinicView, UpdateClinicView
@@ -10,11 +10,13 @@ urlpatterns = [
     path('register/customer/', RegisterCustomerView.as_view(), name='register-customer'), 
     path('register/clinic/', RegisterClinicView.as_view(), name='register-clinic'),
     path('register/invoice/', RegisterInvoiceView.as_view(), name='register-invoice'),
+    # path('insert/access/', InsertAccessView.as_view(), name='insert-access'),
 
     # LIST
     path('list/invoices/', ListInvoicesView.as_view(), name='list-all-invoices'),
     path('list/clinics/', ListClinicsView.as_view(), name='list-all-clinics'),
     path('list/customers/', ListCustomerView.as_view(), name='list-all-customers'),
+    path('list/accessHistory/', ListAccessHistoryView.as_view(), name='list-access'),
     path('sum/amount/', SumAmountView.as_view(), name='sum-amount'),
     path('sum/scheduled/', SumScheduledView.as_view(), name='sum-scheduled'),
 

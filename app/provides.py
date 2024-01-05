@@ -1,6 +1,11 @@
 from .models import User_Root, Customer, UserProfile
 from django.contrib.contenttypes.models import ContentType
 import filetype
+from geopy.geocoders import OpenCage
+from geopy.exc import GeocoderTimedOut
+
+from .models import User_Root, Customer, UserProfile
+from amcfinancial.settings import OPENCAGE_API_KEY
 
 def user_profile_type(validation):
     if validation['type'] == 0:
@@ -34,5 +39,18 @@ def get_file_mime_type(file):
         else:
             return None
     except Exception as e:
-        print(e)
+        return None
+    
+def location_validation(latitude, longitude):
+    geolocator = OpenCage(api_key=OPENCAGE_API_KEY)
+    try:
+        localization = geolocator.reverse((latitude, longitude), exactly_one=True)
+        country = localization.raw['components']['country']
+        if country == 'Brazil' or country == 'Switzerland':
+            return {'validation': True, 'country': country} 
+        else:
+            return {'validation': False, 'country': country} 
+    except:
+        return {'validation': False}
+
         
