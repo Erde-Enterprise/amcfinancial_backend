@@ -32,6 +32,20 @@ class LoginView(APIView):
                 type=OpenApiTypes.STR,
                 location="form",
             ),
+            OpenApiParameter(
+                name = "longitude",
+                description = "User longitude.",
+                required = True,
+                type = OpenApiTypes.FLOAT,
+                location = "form"
+            ),
+            OpenApiParameter(
+                name = "latitude",
+                description = "User latitude.",
+                required = True,
+                type = OpenApiTypes.FLOAT,
+                location = "form"
+            )
         ],
       request=LoginSerializer,
       responses={
