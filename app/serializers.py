@@ -10,7 +10,9 @@ from .provides import get_file_mime_type
 class LoginSerializer(serializers.Serializer):
     email_or_nickname = serializers.CharField()
     password = serializers.CharField()
-
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+    
 class RegisterCustomerSerializer(serializers.Serializer):
     name = serializers.CharField()
     nickname = serializers.CharField()

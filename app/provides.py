@@ -1,8 +1,10 @@
-from .models import User_Root, Customer, UserProfile
 from django.contrib.contenttypes.models import ContentType
-import filetype
+from django.db.models import Q
 from geopy.geocoders import OpenCage
 from geopy.exc import GeocoderTimedOut
+
+import filetype
+
 
 from .models import User_Root, Customer, UserProfile
 from amcfinancial.settings import OPENCAGE_API_KEY
@@ -53,4 +55,28 @@ def location_validation(latitude, longitude):
     except:
         return {'validation': False}
 
-        
+
+def get_or_create_user_profile(user):
+    if hasattr(user, 'type'):
+        user_profiles = UserProfile.objects.filter(content_type=ContentType.objects.get_for_model(Customer), object_id=user.id).first()
+        if user_profiles:    
+            return user_profiles
+        else:
+            user_profiles = UserProfile.objects.create(
+                content_type= ContentType.objects.get_for_model(Customer),
+                object_id= user.id,
+            )
+            user_profiles.save()
+        return user_profiles
+
+    else:
+        user_profiles = UserProfile.objects.filter(content_type=ContentType.objects.get_for_model(User_Root), object_id=user.id).first()
+        if user_profiles:
+            return user_profiles
+        else:
+            user_profiles = UserProfile.objects.create(
+                content_type= ContentType.objects.get_for_model(User_Root),
+                object_id= user.id,
+            )
+            user_profiles.save()
+            return user_profiles
