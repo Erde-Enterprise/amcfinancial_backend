@@ -4,12 +4,13 @@ from rest_framework import status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+
 import pytz
 from datetime import datetime
 
 from ..models import User_Root, Customer, Access_History
 from ..serializers import LoginSerializer, LoginCustomerResponseSerializer, LoginUserRootResponseSerializer, ListAccessHistorySerializer
-from ..provides import user_profile_type
+from ..provides import  location_validation, get_or_create_user_profile
 from ..middleware import teste_token
 
 class LoginView(APIView):
@@ -31,6 +32,20 @@ class LoginView(APIView):
                 type=OpenApiTypes.STR,
                 location="form",
             ),
+            OpenApiParameter(
+                name = "longitude",
+                description = "User longitude.",
+                required = True,
+                type = OpenApiTypes.FLOAT,
+                location = "form"
+            ),
+            OpenApiParameter(
+                name = "latitude",
+                description = "User latitude.",
+                required = True,
+                type = OpenApiTypes.FLOAT,
+                location = "form"
+            )
         ],
       request=LoginSerializer,
       responses={
@@ -68,42 +83,56 @@ class LoginView(APIView):
     )
     def post(self, request):
         try:
-          serializer = LoginSerializer(data=request.data)
-          serializer.is_valid(raise_exception=True)
-          email_or_nickname = serializer.validated_data['email_or_nickname']
-          password = serializer.validated_data['password']
+            serializer = LoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            email_or_nickname = serializer.validated_data['email_or_nickname']
+            password = serializer.validated_data['password']
+            latitude = serializer.validated_data['latitude']
+            longitude = serializer.validated_data['longitude']
 
-          user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
-          if user_root and check_password(password, user_root.password) and user_root.searchable:
-              response = LoginUserRootResponseSerializer(user_root)
-              return Response(response.data, status=status.HTTP_200_OK)
-          
-          customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
-          if customer and check_password(password, customer.password) and customer.searchable:
-              response = LoginCustomerResponseSerializer(customer)
-              return Response(response.data, status=status.HTTP_200_OK)
-          
-          return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+            location = location_validation(latitude, longitude)
+            timezone_switzerland = pytz.timezone('Europe/Zurich')
+
+            user_root = User_Root.objects.filter(Q(email_root=email_or_nickname) | Q(nickname=email_or_nickname)).first()
+            if user_root and check_password(password, user_root.password) and user_root.searchable:
+                user = get_or_create_user_profile(user_root)
+                access_history = Access_History.objects.create(
+                    login_date = datetime.now(timezone_switzerland).date(),
+                    login_time = datetime.now(timezone_switzerland).replace(microsecond=0).time(),
+                    location = location['country'],
+                    status = True,
+                    user = user
+                )
+                access_history.save()
+                response = LoginUserRootResponseSerializer(user_root)
+                return Response(response.data, status=status.HTTP_200_OK)
+
+            
+            customer = Customer.objects.filter(Q(email=email_or_nickname) | Q(nickname=email_or_nickname)).first() 
+            if customer and check_password(password, customer.password) and customer.searchable:
+                user = get_or_create_user_profile(customer)
+                access_history = Access_History.objects.create(
+                    login_date = datetime.now(timezone_switzerland).date(),
+                    login_time = datetime.now(timezone_switzerland).replace(microsecond=0).time(),
+                    location = location['country'],
+                    status = location['validation'],
+                    user = user
+                )
+                access_history.save()
+                if location['validation']:
+                    response = LoginCustomerResponseSerializer(customer)
+                    return Response(response.data, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+
+            return Response({'error': 'Unauthorized User'}, status=status.HTTP_401_UNAUTHORIZED)
+        
         except serializers.ValidationError as e:
-          errors = dict(e.detail)  
-          return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+            errors = dict(e.detail)  
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         except:
             return Response({'error': 'Internal Server Error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-# class InsertAccessView(APIView):
-#     def get(self, request):
-#         validation = teste_token(request.headers)
-#         user = user_profile_type(validation)
-#         timezone_switzerland = pytz.timezone('Europe/Zurich')
-#         access_history = Access_History.objects.create(
-#             login_date = datetime.now(timezone_switzerland).date(),
-#             login_time = datetime.now(timezone_switzerland).replace(microsecond=0).time(),
-#             location = "Switzerland",
-#             status = True,
-#             user = user
-#         )
-#         access_history.save()
-#         return Response({'response': 'Access History inserted successfully'}, status=status.HTTP_200_OK)
 
 class ListAccessHistoryView(APIView):
     @extend_schema(
